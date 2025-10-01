@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+
+/* Global dark background similar to the reference hero */
+html, body {
+  min-height: 100%;
+}
+
+body {
+  background-color: #000000;
+  background-image:
+    radial-gradient(1200px 600px at 50% -10%, rgba(24, 48, 80, 0.55), rgba(5, 7, 13, 0)),
+    radial-gradient(800px 400px at 25% -10%, rgba(24, 48, 80, 0.35), rgba(5, 7, 13, 0)),
+    radial-gradient(800px 400px at 75% -10%, rgba(24, 48, 80, 0.35), rgba(5, 7, 13, 0)),
+    radial-gradient(1200px 900px at 50% 120%, rgba(0, 0, 0, 0.8), rgba(5, 7, 13, 1));
+  color: rgb(226 232 240);
+}
+
+/* Helper to ensure hero fills the viewport */
+.hero-screen {
+  min-height: 100vh;
+}
