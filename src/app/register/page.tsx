@@ -3,15 +3,17 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import GlareHover from '@/components/ui/GlareHover'
-import { FiEye, FiEyeOff, FiChevronDown } from 'react-icons/fi'
-import { FaLinkedin } from 'react-icons/fa'
-import { FcGoogle } from 'react-icons/fc'
+import { FiEye, FiEyeOff } from 'react-icons/fi'
 import TextType from '@/components/ui/TextType'
+import { authSignup, getOauthUrl } from '@/lib/api'
+import { useRouter } from 'next/navigation'
 
 export default function RegisterPage() {
-  const [role, setRole] = useState<'candidate' | 'employer'>('candidate')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   return (
     <main className="min-h-screen">
@@ -34,17 +36,46 @@ export default function RegisterPage() {
           </div>
 
           <div className="rounded-xl border bg-card p-6 shadow-sm">
-            <form className="space-y-5" aria-label="Registration form">
+            <form
+              className="space-y-5"
+              aria-label="Signup form"
+              onSubmit={async (e) => {
+                e.preventDefault()
+                if (isSubmitting) return
+                setError(null)
+                setIsSubmitting(true)
+                const form = new FormData(e.currentTarget)
+                const fullName = String(form.get('fullName') || '')
+                const email = String(form.get('email') || '')
+                const password = String(form.get('password') || '')
+                const confirmPassword = String(form.get('confirmPassword') || '')
+                if (password !== confirmPassword) {
+                  setError('Passwords do not match')
+                  setIsSubmitting(false)
+                  return
+                }
+                try {
+                  await authSignup({ name: fullName, email, password })
+                  // Redirect to verify-email page with email parameter
+                  const verifyUrl = `${window.location.origin}/verify-email?email=${encodeURIComponent(email)}`
+                  router.push(verifyUrl)
+                } catch (err) {
+                  setError((err as Error).message)
+                } finally {
+                  setIsSubmitting(false)
+                }
+              }}
+            >
               <div className="space-y-2">
                 <label htmlFor="fullName" className="text-sm font-medium text-foreground">
-                  Full name
+                  Full Name
                 </label>
                 <input
                   id="fullName"
                   name="fullName"
                   type="text"
                   required
-                  placeholder="John Doe"
+                  placeholder="John"
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-primary/20 transition focus:ring-2"
                 />
               </div>
@@ -111,78 +142,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  I am a
-                </label>
-                <div
-                  className="relative"
-                  tabIndex={0}
-                  onBlur={(e) => {
-                    // close when focus leaves container
-                    const currentTarget = e.currentTarget
-                    requestAnimationFrame(() => {
-                      if (!currentTarget.contains(document.activeElement)) {
-                        const pop = currentTarget.querySelector('[data-role-popover]') as HTMLDivElement | null
-                        if (pop) pop.style.display = 'none'
-                      }
-                    })
-                  }}
-                >
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-md border bg-background px-3 py-2 text-left text-sm outline-none ring-primary/20 transition focus:ring-2"
-                    onClick={(e) => {
-                      const pop = (e.currentTarget.nextElementSibling as HTMLDivElement | null)
-                      if (!pop) return
-                      pop.style.display = pop.style.display === 'block' ? 'none' : 'block'
-                    }}
-                    aria-haspopup="listbox"
-                    aria-expanded={false}
-                  >
-                    <span className="capitalize">{role}</span>
-                    <FiChevronDown className="text-muted-foreground" />
-                  </button>
-                  <div
-                    data-role-popover
-                    className="absolute left-0 top-full z-50 mt-1 hidden w-full min-w-full overflow-hidden rounded-md border bg-card text-foreground shadow-lg"
-                    role="listbox"
-                  >
-                    {['candidate','employer'].map(opt => (
-                      <button
-                        key={opt}
-                        type="button"
-                        role="option"
-                        aria-selected={role === opt}
-                        className={`w-full bg-gray-800 cursor-pointer px-3 py-2 text-left text-sm transition hover:bg-muted/70 ${role === opt ? 'bg-muted' : ''}`}
-                        onClick={(e) => {
-                          setRole(opt as 'candidate' | 'employer')
-                          const pop = (e.currentTarget.parentElement as HTMLDivElement | null)
-                          if (pop) pop.style.display = 'none'
-                        }}
-                      >
-                        {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {role === 'employer' && (
-                <div className="space-y-2">
-                  <label htmlFor="companyName" className="text-sm font-medium text-foreground">
-                    Company name
-                  </label>
-                  <input
-                    id="companyName"
-                    name="companyName"
-                    type="text"
-                    required
-                    placeholder="Acme Inc."
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-primary/20 transition focus:ring-2"
-                  />
-                </div>
-              )}
+              {/* No company fields for basic signup */}
 
               <div className="flex items-start gap-3">
                 <input
@@ -206,6 +166,10 @@ export default function RegisterPage() {
                 </label>
               </div>
 
+              {error && (
+                <p className="text-sm text-red-500">{error}</p>
+              )}
+
               <GlareHover
                 width="100%"
                 height="44px"
@@ -215,12 +179,11 @@ export default function RegisterPage() {
                 className="w-full"
               >
                 <button
-                  type="button"
-                  disabled
-                  aria-disabled
-                  className="w-full h-full text-sm font-medium text-primary-foreground cursor-pointer"
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full h-full text-sm font-medium text-primary-foreground cursor-pointer disabled:opacity-60"
                 >
-                  Create account
+                  {isSubmitting ? 'Creating…' : 'Create account'}
                 </button>
               </GlareHover>
 
@@ -230,12 +193,26 @@ export default function RegisterPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-muted cursor-pointer">
-                  <FcGoogle className="text-base" />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const redirect_to = `${window.location.origin}/login`
+                    const { url } = await getOauthUrl({ provider: 'google', redirect_to })
+                    window.location.href = url
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-muted cursor-pointer"
+                >
                   Google
                 </button>
-                <button type="button" className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-muted cursor-pointer">
-                  <FaLinkedin className="text-[#0A66C2]" />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const redirect_to = `${window.location.origin}/login`
+                    const { url } = await getOauthUrl({ provider: 'linkedin', redirect_to })
+                    window.location.href = url
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-muted cursor-pointer"
+                >
                   LinkedIn
                 </button>
               </div>
