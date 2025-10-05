@@ -1,6 +1,8 @@
 import ProfileHeader from '@/components/profiles/ProfileHeader'
 import type { EmployerProfile } from '@/types/profile'
 
+export const dynamic = 'force-dynamic'
+
 async function fetchEmployer ()
 {
 	const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'

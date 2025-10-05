@@ -3,6 +3,8 @@ import JobFilters from '@/components/jobs/job-filters'
 import JobCard from '@/components/jobs/job-card'
 import type { PaginatedJobs } from '@/types/job'
 
+export const dynamic = 'force-dynamic'
+
 interface JobsPageProps
 {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
