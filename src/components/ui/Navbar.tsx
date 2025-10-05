@@ -10,7 +10,7 @@ export default function Navbar() {
         aria-label="Main"
       >
         <div className="flex items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
+          <Link href="/register" className="flex items-center gap-2 font-semibold">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 shadow-inner"></span>
             <span className="text-sm sm:text-base text-white/90">Hulo</span>
           </Link>
@@ -18,12 +18,12 @@ export default function Navbar() {
           <div className="hidden items-center gap-6 sm:flex">
             <Link href="/" className="text-sm text-white/70 hover:text-white transition-colors">Home</Link>
             <Link href="/jobs" className="text-sm text-white/70 hover:text-white transition-colors">Jobs</Link>
-            <Link
+            {/* <Link
               href="/register"
               className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
             >
               Get Started
-            </Link>
+            </Link> */}
           </div>
         </div>
       </nav>

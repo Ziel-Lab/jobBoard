@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import GlareHover from '@/components/ui/GlareHover'
-import { FiEye, FiEyeOff } from 'react-icons/fi'
-import { authLogin, getOauthUrl } from '@/lib/api'
+import { authLogin } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
@@ -35,8 +34,12 @@ export default function LoginPage() {
 	}
 
 	return (
-		<main className="min-h-screen">
-			<div className="container mx-auto px-4 py-16">
+		<main className="min-h-screen bg-black relative overflow-hidden">
+			{/* Ambient light effects */}
+			<div className="absolute top-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+			<div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+			
+			<div className="container mx-auto px-4 py-16 relative z-10">
 				<div className="mx-auto max-w-md">
 					<div className="mb-8 text-center">
 						<h1 className="text-3xl font-semibold tracking-tight text-foreground">
@@ -47,7 +50,11 @@ export default function LoginPage() {
 						</p>
 					</div>
 
-					<div className="rounded-xl border bg-card p-6 shadow-sm">
+					<div className="rounded-xl border border-white/30 bg-gradient-to-br from-white/20 via-white/10 to-white/5 backdrop-blur-xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.1)_inset] relative overflow-hidden">
+						{/* Shine effect overlay */}
+						<div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-50 pointer-events-none" />
+						<div className="absolute -top-24 -right-24 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+						<div className="relative z-10">
 						<form className="space-y-5" aria-label="Login form" onSubmit={handleSubmit}>
 							<div className="space-y-2">
 								<label htmlFor="email" className="text-sm font-medium text-foreground">
@@ -59,7 +66,7 @@ export default function LoginPage() {
 									type="email"
 									required
 									placeholder="you@company.com"
-									className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-primary/20 transition focus:ring-2"
+									className="w-full rounded-md border border-white/30 bg-white/15 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder-white/60 outline-none transition-all duration-200 focus:ring-2 focus:ring-white/50 focus:bg-white/20 focus:border-white/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1)]"
 								/>
 							</div>
 
@@ -74,7 +81,7 @@ export default function LoginPage() {
 										type={showPassword ? 'text' : 'password'}
 										required
 										placeholder="••••••••"
-										className="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm outline-none ring-primary/20 transition focus:ring-2"
+										className="w-full rounded-md border border-white/30 bg-white/15 backdrop-blur-sm px-3 py-2 pr-10 text-sm text-white placeholder-white/60 outline-none transition-all duration-200 focus:ring-2 focus:ring-white/50 focus:bg-white/20 focus:border-white/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1)]"
 									/>
 									<button
 										type="button"
@@ -107,14 +114,21 @@ export default function LoginPage() {
 									{isSubmitting ? 'Signing in…' : 'Sign in'}
 								</button>
 						</GlareHover>
-
-						<div className="relative py-2 text-center text-xs text-muted-foreground">
+						
+						<p className="font-thin mt-6 text-center text-sm text-white/80">
+						Don&apos;t have an employer account?
+						{' '}
+						<Link href="/register" className="font-semibold text-primary underline-offset-4 hover:underline cursor-pointer">
+							Create one
+						</Link>
+					    </p>
+						{/* <div className="relative py-2 text-center text-xs text-muted-foreground">
 							<span className="bg-card px-2">or continue with</span>
 							<span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-border" />
-						</div>
+						</div> */}
 
-						<div className="grid grid-cols-2 gap-3">
-							<button
+						{/*<div className="grid grid-cols-2 gap-3">
+							 <button
 								type="button"
 								onClick={async () => {
 									const redirect_to = `${window.location.origin}/login`
@@ -124,8 +138,8 @@ export default function LoginPage() {
 								className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-muted cursor-pointer"
 							>
 								Google
-							</button>
-							<button
+							</button> */}
+							{/* <button
 								type="button"
 								onClick={async () => {
 									const redirect_to = `${window.location.origin}/login`
@@ -135,18 +149,13 @@ export default function LoginPage() {
 								className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-muted cursor-pointer"
 							>
 								LinkedIn
-							</button>
-						</div>
+							</button> 
+						</div>*/}
 						</form>
+						</div>
 					</div>
 
-					<p className="mt-6 text-center text-sm text-muted-foreground">
-						Don't have an employer account?
-						{' '}
-						<Link href="/register" className="text-primary underline-offset-4 hover:underline cursor-pointer">
-							Create one
-						</Link>
-					</p>
+					
 				</div>
 			</div>
 		</main>

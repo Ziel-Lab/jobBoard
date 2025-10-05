@@ -20,8 +20,10 @@ export default function Home() {
 
   return (
     <>
-      <div className="absolute left-0 right-0 top-6 z-[100] flex justify-center">
-        <Navbar />
+      <div className="absolute left-0 right-0 top-6 z-[200] flex justify-center pointer-events-none">
+        <div className="pointer-events-auto w-full flex justify-center">
+          <Navbar />
+        </div>
       </div>
       <HeroSection/>
       <SectionDivider />
@@ -85,7 +87,7 @@ export default function Home() {
                     <circle cx="12" cy="7" r="3" />
                   </svg>
                 ),
-                label: 'Profile',
+                label: 'Login',
                 onClick: () => router.push('/login'),
                 className: 'text-white/80'
               },

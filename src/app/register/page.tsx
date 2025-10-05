@@ -16,8 +16,12 @@ export default function RegisterPage() {
   const router = useRouter()
 
   return (
-    <main className="min-h-screen">
-      <div className="container mx-auto px-4 py-16">
+    <main className="min-h-screen bg-black relative overflow-hidden">
+      {/* Ambient light effects */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+      
+      <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="mx-auto max-w-md">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
@@ -35,7 +39,11 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <div className="rounded-xl border border-white/30 bg-gradient-to-br from-white/20 via-white/10 to-white/5 backdrop-blur-xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.1)_inset] relative overflow-hidden">
+            {/* Shine effect overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-50 pointer-events-none" />
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative z-10">
             <form
               className="space-y-5"
               aria-label="Signup form"
@@ -76,7 +84,7 @@ export default function RegisterPage() {
                   type="text"
                   required
                   placeholder="John"
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-primary/20 transition focus:ring-2"
+                  className="w-full rounded-md border border-white/30 bg-white/15 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder-white/60 outline-none transition-all duration-200 focus:ring-2 focus:ring-white/50 focus:bg-white/20 focus:border-white/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1)]"
                 />
               </div>
 
@@ -90,7 +98,7 @@ export default function RegisterPage() {
                   type="email"
                   required
                   placeholder="you@example.com"
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-primary/20 transition focus:ring-2"
+                  className="w-full rounded-md border border-white/30 bg-white/15 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder-white/60 outline-none transition-all duration-200 focus:ring-2 focus:ring-white/50 focus:bg-white/20 focus:border-white/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1)]"
                 />
               </div>
 
@@ -105,16 +113,16 @@ export default function RegisterPage() {
                     type={showPassword ? 'text' : 'password'}
                     required
                     placeholder="••••••••"
-                    className="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm outline-none ring-primary/20 transition focus:ring-2"
+                    className="w-full rounded-md border border-white/30 bg-white/15 backdrop-blur-sm px-3 py-2 pr-10 text-sm text-white placeholder-white/60 outline-none transition-all duration-200 focus:ring-2 focus:ring-white/50 focus:bg-white/20 focus:border-white/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1)]"
                   />
                   <button
-                    type="button"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    onClick={() => setShowPassword(v => !v)}
-                  >
-                    {showPassword ? <FiEyeOff /> : <FiEye />}
-                  </button>
+										type="button"
+										aria-label={showPassword ? 'Hide password' : 'Show password'}
+										className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+										onClick={() => setShowPassword(v => !v)}
+									>
+										{showPassword ? '👁️' : '🙈'}
+									</button>
                 </div>
               </div>
 
@@ -129,7 +137,7 @@ export default function RegisterPage() {
                     type={showConfirm ? 'text' : 'password'}
                     required
                     placeholder="••••••••"
-                    className="w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm outline-none ring-primary/20 transition focus:ring-2"
+                    className="w-full rounded-md border border-white/30 bg-white/15 backdrop-blur-sm px-3 py-2 pr-10 text-sm text-white placeholder-white/60 outline-none transition-all duration-200 focus:ring-2 focus:ring-white/50 focus:bg-white/20 focus:border-white/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1)]"
                   />
                   <button
                     type="button"
@@ -137,7 +145,7 @@ export default function RegisterPage() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                     onClick={() => setShowConfirm(v => !v)}
                   >
-                    {showConfirm ? <FiEyeOff /> : <FiEye />}
+                    {showConfirm ? '👁️' : '🙈'}
                   </button>
                 </div>
               </div>
@@ -153,14 +161,14 @@ export default function RegisterPage() {
                   className="mt-0.5 h-4 w-4 rounded border accent-primary"
                   aria-describedby="terms-desc"
                 />
-                <label htmlFor="terms" className="text-sm text-muted-foreground">
+                <label htmlFor="terms" className="font-thin text-sm text-white/80">
                   I agree to the
                   {' '}
-                  <Link href="#" className="text-primary underline-offset-4 hover:underline">
+                  <Link href="#" className="font-semibold text-primary underline-offset-4 hover:underline">
                     Terms of Service
                   </Link>
                   {' '}and{' '}
-                  <Link href="#" className="text-primary underline-offset-4 hover:underline">
+                  <Link href="#" className="font-semibold text-primary underline-offset-4 hover:underline">
                     Privacy Policy
                   </Link>
                 </label>
@@ -187,13 +195,21 @@ export default function RegisterPage() {
                 </button>
               </GlareHover>
 
-              <div className="relative py-2 text-center text-xs text-muted-foreground">
+              <p className="font-thin mt-6 text-center text-sm text-muted-foreground">
+                Already have an account?
+                {' '}
+              <Link href="/login" className=" font-bold text-primary underline-offset-4 hover:underline cursor-pointer">
+                Sign in
+              </Link>
+              </p>
+
+              {/* <div className="relative py-2 text-center text-xs text-muted-foreground">
                 <span className="bg-card px-2">or continue with</span>
                 <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-border" />
-              </div>
+              </div> */}
 
-              <div className="grid grid-cols-2 gap-3">
-                <button
+              {/*<div className="grid grid-cols-2 gap-3">
+                 <button
                   type="button"
                   onClick={async () => {
                     const redirect_to = `${window.location.origin}/login`
@@ -203,8 +219,8 @@ export default function RegisterPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-muted cursor-pointer"
                 >
                   Google
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   type="button"
                   onClick={async () => {
                     const redirect_to = `${window.location.origin}/login`
@@ -214,18 +230,13 @@ export default function RegisterPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-muted cursor-pointer"
                 >
                   LinkedIn
-                </button>
-              </div>
+                </button> 
+              </div>*/}
             </form>
+            </div>
           </div>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?
-            {' '}
-            <Link href="/login" className="text-primary underline-offset-4 hover:underline cursor-pointer">
-              Sign in
-            </Link>
-          </p>
+          
         </div>
       </div>
     </main>

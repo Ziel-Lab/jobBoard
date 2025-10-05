@@ -1,5 +1,6 @@
 import React from 'react'
 import LightRays from '../ui/LightRays'
+import Link from 'next/link'
 
 
 
@@ -29,11 +30,14 @@ const HeroSection = () => {
           <p className="mt-4 text-white/80 max-w-2xl mx-auto">Hire top talent faster, smarter, and more transparently avoiding inbox floods with our AI-powered platform.</p>
         </div>
         <div className="mt-10 flex items-center gap-4">
+          <Link href="/register">
           <button
-            className="rounded-full px-6 py-3 text-sm font-semibold text-neutral-900 border border-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(0,0,0,0.2)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.78))] hover:bg-white focus:outline-none focus:ring-2 focus:ring-white/40"
+            className="rounded-full px-6 py-3 text-sm font-semibold text-neutral-900 border border-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(0,0,0,0.2)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0.78))] hover:bg-white focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer"
+
           >
             Get Started
           </button>
+          </Link>
           <button
             className="rounded-full px-6 py-3 text-sm font-semibold text-white/90 border border-white/25 bg-white/5 hover:bg-white/10 backdrop-blur-md"
           >
