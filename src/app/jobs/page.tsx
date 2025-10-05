@@ -10,7 +10,8 @@ interface JobsPageProps
 
 async function fetchJobs (qs: URLSearchParams)
 {
-  const url = `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/jobs?${qs.toString()}`
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const url = `${baseUrl}/api/jobs?${qs.toString()}`
   const res = await fetch(url, { next: { revalidate: 60 } })
   if (!res.ok) throw new Error('Failed to load jobs')
   return res.json() as Promise<PaginatedJobs>

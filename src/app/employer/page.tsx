@@ -3,7 +3,8 @@ import type { EmployerProfile } from '@/types/profile'
 
 async function fetchEmployer ()
 {
-	const url = `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/profiles/employer`
+	const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+	const url = `${baseUrl}/api/profiles/employer`
 	const res = await fetch(url, { next: { revalidate: 60 } })
 	if (!res.ok) throw new Error('Failed to load employer')
 	return res.json() as Promise<EmployerProfile>
