@@ -5,7 +5,7 @@ import type { PaginatedJobs } from '@/types/job'
 
 interface JobsPageProps
 {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 async function fetchJobs (qs: URLSearchParams)
@@ -18,8 +18,9 @@ async function fetchJobs (qs: URLSearchParams)
 
 export default async function JobsPage ({ searchParams }: JobsPageProps)
 {
+  const resolvedSearchParams = await searchParams
   const params = new URLSearchParams()
-  for (const [k, v] of Object.entries(searchParams)) {
+  for (const [k, v] of Object.entries(resolvedSearchParams)) {
     if (typeof v === 'string') params.set(k, v)
   }
   params.set('page', params.get('page') || '1')
