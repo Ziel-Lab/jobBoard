@@ -2,7 +2,7 @@
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
 
 async function request<T>(path: string, options?: { method?: HttpMethod; body?: unknown; token?: string }) {
 	const { method = 'GET', body, token } = options || {}
