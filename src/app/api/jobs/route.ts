@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import type { Job, PaginatedJobs } from '@/types/job'
 
 const JOBS: Job[] = [
@@ -105,6 +106,83 @@ export async function GET (req: Request)
 
   const payload: PaginatedJobs = { items: paged, page, pageSize, total }
   return NextResponse.json(payload)
+}
+
+// Validation schema for job creation
+const createJobSchema = z.object({
+	title: z.string().min(3),
+	location: z.string().min(2),
+	isRemote: z.boolean(),
+	employmentType: z.enum(['full-time', 'part-time', 'contract', 'internship']),
+	experienceLevel: z.enum(['entry', 'mid', 'senior', 'lead']),
+	salaryMin: z.number().min(0).optional(),
+	salaryMax: z.number().min(0).optional(),
+	currency: z.enum(['USD', 'EUR', 'GBP', 'INR']),
+	description: z.string().min(50),
+	responsibilities: z.string().min(20),
+	requirements: z.string().min(20),
+	benefits: z.string().optional(),
+	skills: z.array(z.string()).min(1),
+	applicationDeadline: z.string().optional(),
+})
+
+export async function POST(request: Request) {
+	try {
+		const body = await request.json()
+		
+		// Validate the request body
+		const validatedData = createJobSchema.parse(body)
+		
+		// Create new job object
+		const newJob: Job = {
+			id: `job-${Date.now()}`,
+			title: validatedData.title,
+			company: 'Your Company', // TODO: Get from authenticated user's company profile
+			location: validatedData.location,
+			isRemote: validatedData.isRemote,
+			employmentType: validatedData.employmentType,
+			experienceLevel: validatedData.experienceLevel,
+			salaryMin: validatedData.salaryMin,
+			salaryMax: validatedData.salaryMax,
+			currency: validatedData.currency,
+			description: validatedData.description,
+			skills: validatedData.skills,
+			postedAt: new Date().toISOString(),
+			applyUrl: '#', // TODO: Generate proper application URL
+		}
+		
+		// In a real app, save to database
+		// For now, just add to in-memory array
+		JOBS.unshift(newJob)
+		
+		return NextResponse.json({
+			success: true,
+			message: 'Job posted successfully',
+			data: newJob,
+		}, { status: 201 })
+		
+	} catch (error) {
+		console.error('Job creation error:', error)
+		
+		if (error instanceof z.ZodError) {
+			return NextResponse.json(
+				{
+					success: false,
+					message: 'Invalid job data provided',
+					errors: error.issues,
+				},
+				{ status: 400 }
+			)
+		}
+		
+		return NextResponse.json(
+			{
+				success: false,
+				message: 'Internal server error',
+			},
+			{ status: 500 }
+		)
+	}
 }
 
 

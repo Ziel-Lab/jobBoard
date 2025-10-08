@@ -30,8 +30,8 @@ function VerifyEmailContent() {
 				}
 			}
 			setSuccess(true)
-			// Redirect to employer dashboard since user is now authenticated
-			setTimeout(() => router.push('/employer'), 2000)
+			// Redirect to company onboarding since user is now authenticated
+			setTimeout(() => router.push('/company/onboarding'), 2000)
 		} catch (e) {
 			setError((e as Error).message)
 			setHasVerified(false)
@@ -93,7 +93,7 @@ function VerifyEmailContent() {
 								</svg>
 							</div>
 							<p className="text-lg font-medium text-emerald-400 mb-2">Email verified successfully!</p>
-							<p className="text-sm text-white/70">Logging you in...</p>
+							<p className="text-sm text-white/70">Setting up your company profile...</p>
 						</div>
 					) : isSubmitting && accessToken ? (
 						<div className="text-center py-8">

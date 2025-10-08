@@ -71,7 +71,7 @@ export function CustomSelect({
 	}
 
 	return (
-		<div ref={selectRef} className={`relative ${className}`}>
+		<div ref={selectRef} className={`relative z-50 ${className}`} style={{ isolation: 'isolate' }}>
 			{/* Select Button */}
 			<button
 				type="button"

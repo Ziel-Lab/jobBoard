@@ -1,52 +1,82 @@
-import ProfileHeader from '@/components/profiles/ProfileHeader'
-import type { EmployerProfile } from '@/types/profile'
+import DashboardClient from './dashboard-client'
+import type { Job } from '@/types/job'
 
 export const dynamic = 'force-dynamic'
 
-async function fetchEmployer ()
-{
-	const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-	const url = `${baseUrl}/api/profiles/employer`
-	const res = await fetch(url, { next: { revalidate: 60 } })
-	if (!res.ok) throw new Error('Failed to load employer')
-	return res.json() as Promise<EmployerProfile>
+interface DashboardStats {
+	totalJobs: number
+	activeJobs: number
+	totalApplications: number
+	newApplications: number
 }
 
-export default async function EmployerPage ()
-{
-	const profile = await fetchEmployer()
+async function fetchDashboardData() {
+	// In a real app, these would be actual API calls
+	// For now, we'll return mock data
+	const stats: DashboardStats = {
+		totalJobs: 24,
+		activeJobs: 18,
+		totalApplications: 342,
+		newApplications: 28,
+	}
 
-	return (
-		<main className="relative z-0 mx-auto w-full max-w-7xl px-4 pt-10 pb-16 text-white">
-			<ProfileHeader
-				title={profile.companyName}
-				subtitle={profile.industry || ''}
-				location={profile.location}
-				actions={[{ label: 'Visit Website', href: profile.website || '#' }]}
-			/>
+	const recentJobs: Job[] = [
+		{
+			id: '1',
+			title: 'Senior Frontend Developer',
+			company: 'TechCorp Inc.',
+			location: 'San Francisco, CA',
+			isRemote: true,
+			salaryMin: 120000,
+			salaryMax: 180000,
+			currency: 'USD',
+			description: 'We are looking for an experienced frontend developer to join our team...',
+			skills: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS'],
+			experienceLevel: 'senior',
+			employmentType: 'full-time',
+			postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+			applyUrl: '/jobs/1',
+		},
+		{
+			id: '2',
+			title: 'Backend Engineer',
+			company: 'TechCorp Inc.',
+			location: 'New York, NY',
+			isRemote: false,
+			salaryMin: 100000,
+			salaryMax: 150000,
+			currency: 'USD',
+			description: 'Join our backend team to build scalable microservices...',
+			skills: ['Node.js', 'Python', 'AWS', 'Docker'],
+			experienceLevel: 'mid',
+			employmentType: 'full-time',
+			postedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+			applyUrl: '/jobs/2',
+		},
+		{
+			id: '3',
+			title: 'Product Designer',
+			company: 'TechCorp Inc.',
+			location: 'Remote',
+			isRemote: true,
+			salaryMin: 90000,
+			salaryMax: 130000,
+			currency: 'USD',
+			description: 'We need a creative product designer to craft beautiful user experiences...',
+			skills: ['Figma', 'UI/UX', 'Design Systems', 'Prototyping'],
+			experienceLevel: 'mid',
+			employmentType: 'full-time',
+			postedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+			applyUrl: '/jobs/3',
+		},
+	]
 
-			<div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
-				<section className="lg:col-span-2 space-y-5">
-					{profile.description && (
-						<article className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-							<h2 className="text-lg font-semibold text-indigo-200">About</h2>
-							<p className="mt-2 text-white/80 text-sm leading-6">{profile.description}</p>
-						</article>
-					)}
-				</section>
+	return { stats, recentJobs }
+}
 
-				<aside className="space-y-5">
-					<section className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-						<h2 className="text-lg font-semibold text-emerald-200">Company Info</h2>
-						<div className="mt-3 space-y-2 text-sm text-white/80">
-							{profile.size && <p>Size: <span className="text-emerald-200">{profile.size}</span></p>}
-							{profile.industry && <p>Industry: <span className="text-emerald-200">{profile.industry}</span></p>}
-							{profile.website && <a className="text-sky-200 underline" href={profile.website}>{profile.website}</a>}
-						</div>
-					</section>
-				</aside>
-			</div>
-		</main>
-	)
+export default async function EmployerPage() {
+	const { stats, recentJobs } = await fetchDashboardData()
+
+	return <DashboardClient stats={stats} recentJobs={recentJobs} />
 }
 
