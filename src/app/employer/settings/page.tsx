@@ -365,7 +365,7 @@ export default function CompanySettingsPage() {
 						>
 							<path d="m15 18-6-6 6-6"/>
 						</svg>
-						
+						Back
 					</button>
 					<h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
 						Company Settings
