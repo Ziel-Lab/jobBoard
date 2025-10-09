@@ -3,6 +3,64 @@
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { authVerifyEmail } from '@/lib/api'
+import { authResetPassword } from '@/lib/api'
+
+function ResetPasswordForm({ accessToken }: { accessToken: string }) {
+	const [password, setPassword] = useState('')
+	const [confirm, setConfirm] = useState('')
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+	const [done, setDone] = useState(false)
+	const router = useRouter()
+
+	async function handleSubmit(e: React.FormEvent) {
+		e.preventDefault()
+		if (password !== confirm) {
+			setError('Passwords do not match')
+			return
+		}
+		setIsSubmitting(true)
+		setError(null)
+		try {
+			await authResetPassword({ access_token: accessToken, new_password: password })
+			setDone(true)
+			setTimeout(() => router.push('/login'), 2000)
+		} catch (e) {
+			setError((e as Error).message)
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	if (done) {
+		return <p className="text-center text-emerald-400">Password reset successfully! Redirecting to login...</p>
+	}
+
+	return (
+		<form onSubmit={handleSubmit} className="space-y-4">
+			<input
+				type="password"
+				placeholder="New password"
+				value={password}
+				onChange={(e) => setPassword(e.target.value)}
+				className="w-full p-2 rounded bg-white/5 text-white border border-white/20"
+				required
+			/>
+			<input
+				type="password"
+				placeholder="Confirm password"
+				value={confirm}
+				onChange={(e) => setConfirm(e.target.value)}
+				className="w-full p-2 rounded bg-white/5 text-white border border-white/20"
+				required
+			/>
+			{error && <p className="text-red-500 text-sm">{error}</p>}
+			<button type="submit" disabled={isSubmitting} className="w-full py-2 bg-emerald-500 disabled:opacity-50 rounded text-white">
+				{isSubmitting ? 'Resetting...' : 'Reset Password'}
+			</button>
+		</form>
+	)
+}
 
 function VerifyEmailContent() {
 	const searchParams = useSearchParams()
@@ -14,6 +72,8 @@ function VerifyEmailContent() {
 	const [error, setError] = useState<string | null>(null)
 	const [success, setSuccess] = useState(false)
 	const [hasVerified, setHasVerified] = useState(false)
+	const [isMounted, setIsMounted] = useState(false)
+	const [type, setType] = useState<string | null>(null)
 
 	const handleAutoVerify = useCallback(async (access_token: string, refresh_token: string) => {
 		if (isSubmitting || hasVerified) return
@@ -22,17 +82,37 @@ function VerifyEmailContent() {
 		setError(null)
 		try {
 			const res = await authVerifyEmail({ access_token, refresh_token, type: 'signup' })
+			console.log('Verify email response:', res)
+			
 			// Store session tokens - user is now logged in
-			if (res?.accessToken) {
-				localStorage.setItem('accessToken', res.accessToken)
-				if (res.refreshToken) {
-					localStorage.setItem('refreshToken', res.refreshToken)
+			// Handle both camelCase and snake_case response formats
+			const resData = res as unknown as Record<string, unknown>
+			const accessTokenFromResponse = (resData?.accessToken as string) || (resData?.access_token as string)
+			const refreshTokenFromResponse = (resData?.refreshToken as string) || (resData?.refresh_token as string)
+			
+			if (accessTokenFromResponse) {
+				console.log('Storing access token in localStorage')
+				localStorage.setItem('accessToken', accessTokenFromResponse)
+				if (refreshTokenFromResponse) {
+					console.log('Storing refresh token in localStorage')
+					localStorage.setItem('refreshToken', refreshTokenFromResponse)
 				}
+			} else {
+				console.warn('No access token in response, using tokens from URL')
+				// Fallback: use the tokens from the URL if backend doesn't return new ones
+				localStorage.setItem('accessToken', access_token)
+				localStorage.setItem('refreshToken', refresh_token)
 			}
+			
+			// Verify tokens were stored
+			const storedToken = localStorage.getItem('accessToken')
+			console.log('Token stored successfully:', storedToken ? 'Yes' : 'No')
+			
 			setSuccess(true)
 			// Redirect to company onboarding since user is now authenticated
 			setTimeout(() => router.push('/company/onboarding'), 2000)
 		} catch (e) {
+			console.error('Error during email verification:', e)
 			setError((e as Error).message)
 			setHasVerified(false)
 		} finally {
@@ -42,14 +122,32 @@ function VerifyEmailContent() {
 
 	// Extract tokens from Supabase redirect URL hash
 	useEffect(() => {
+		setIsMounted(true)
+		
 		if (typeof window !== 'undefined' && !hasVerified) {
 			const hash = window.location.hash
 			const urlParams = new URLSearchParams(hash.substring(1))
 			const access_token = urlParams.get('access_token')
 			const refresh_token = urlParams.get('refresh_token')
-			const type = urlParams.get('type')
+			const urlType = urlParams.get('type')
 			
-			if (access_token && refresh_token && type === 'signup') {
+			setType(urlType)
+			
+			if (access_token && urlType === 'recovery') {
+				setAccessToken(access_token)
+				// Verify recovery token first
+				const verifyRecovery = async () => {
+					try {
+						await authVerifyEmail({ access_token, type: 'recovery' })
+						setSuccess(true)
+					} catch (e) {
+						setError((e as Error).message)
+					}
+				}
+				verifyRecovery()
+			}
+
+			if (access_token && refresh_token && urlType === 'signup') {
 				setAccessToken(access_token)
 				setRefreshToken(refresh_token)
 				
@@ -85,7 +183,16 @@ function VerifyEmailContent() {
 					<div className="absolute -top-24 -right-24 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 					<div className="relative z-10">
 					<h1 className="mb-2 text-2xl font-semibold text-white">Verify your email</h1>
-					{success ? (
+					{!isMounted ? (
+						<div className="text-center py-8">
+							<div className="mb-4">
+								<div className="mx-auto h-16 w-16 border-4 border-white/50 border-t-transparent rounded-full animate-spin"></div>
+							</div>
+							<p className="text-lg font-medium mb-2 text-white">Loading...</p>
+						</div>
+					) : type === 'recovery' && success ? (
+						<ResetPasswordForm accessToken={accessToken} />
+					) : success ? (
 						<div className="text-center py-8">
 							<div className="mb-4">
 								<svg className="mx-auto h-16 w-16 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

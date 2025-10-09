@@ -3,9 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import GlareHover from '@/components/ui/GlareHover'
-import { FiEye, FiEyeOff } from 'react-icons/fi'
 import TextType from '@/components/ui/TextType'
-import { authSignup, getOauthUrl } from '@/lib/api'
+import { authSignup } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 
 export default function RegisterPage() {

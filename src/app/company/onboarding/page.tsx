@@ -179,22 +179,67 @@ export default function CompanyOnboardingPage() {
 			const teamData = teamForm.getValues()
 			const preferencesData = preferencesForm.getValues()
 
-			const response = await fetch('/api/company/onboarding', {
+			// Get access token from localStorage
+			const accessToken = localStorage.getItem('accessToken')
+			console.log('Access Token:', accessToken ? 'Found' : 'Not found')
+			
+			if (!accessToken) {
+				throw new Error('No access token found. Please log in again.')
+			}
+
+			// Format data according to backend API requirements
+			const requestBody = {
+				company: {
+					company_name: companyData.companyName,
+					industry: companyData.industry,
+					company_size: companyData.size,
+					location: companyData.location,
+					website_url: companyData.website || '',
+					company_description: companyData.description,
+				},
+				team: (teamData.teamMembers || []).map(member => ({
+					email: member.email,
+					role: member.role,
+					department: member.department,
+				})),
+				settings: {
+					timezone: preferencesData.timezone,
+					jobPostingFrequency: preferencesData.jobPostingFrequency,
+					notifications: {
+						email: preferencesData.notificationPreferences.emailNotifications,
+						sms: preferencesData.notificationPreferences.smsNotifications,
+						marketingEmails: preferencesData.notificationPreferences.marketingEmails,
+					},
+				},
+			}
+
+			const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
+			console.log('API URL:', apiUrl)
+			console.log('Request Body:', requestBody)
+			
+			const response = await fetch(`${apiUrl}/company/onboarding`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${accessToken}`,
 				},
-				body: JSON.stringify({
-					companyData,
-					teamData,
-					preferencesData,
-				}),
+				body: JSON.stringify(requestBody),
 			})
 
-			const result = await response.json()
+			console.log('Response status:', response.status)
+			
+			let result
+			try {
+				result = await response.json()
+				console.log('Response data:', result)
+			} catch (parseError) {
+				console.error('Failed to parse response:', parseError)
+				throw new Error(`Server returned status ${response.status} but response is not JSON`)
+			}
 
 			if (!response.ok) {
-				throw new Error(result.message || 'Failed to complete onboarding')
+				const errorMessage = result.message || result.error || result.detail || 'Failed to complete onboarding'
+				throw new Error(`${errorMessage} (Status: ${response.status})`)
 			}
 
 			// Show success message briefly before redirecting
@@ -206,7 +251,8 @@ export default function CompanyOnboardingPage() {
 			}, 2000)
 		} catch (error) {
 			console.error('Error submitting onboarding:', error)
-			alert('Failed to complete onboarding. Please try again.')
+			const errorMessage = error instanceof Error ? error.message : 'Failed to complete onboarding. Please try again.'
+			alert(`Error: ${errorMessage}`)
 		} finally {
 			setIsSubmitting(false)
 		}

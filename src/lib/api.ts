@@ -82,10 +82,20 @@ export function setupSuperAdmin(payload: {
 
 export function authVerifyEmail(payload: {
 	access_token: string
-	refresh_token: string
-	type: string
+	type: 'signup' | 'recovery'
+	refresh_token?: string
 }) {
 	return request<LoginResponse>('/auth/verify-email', { method: 'POST', body: payload })
+}
+
+// Forgot password – request reset email
+export function authForgotPassword(payload: { email: string }) {
+	return request<void>('/auth/forgot-password', { method: 'POST', body: payload })
+}
+
+// Reset password with recovery token
+export function authResetPassword(payload: { access_token: string; new_password: string }) {
+	return request<void>('/auth/reset-password', { method: 'POST', body: payload })
 }
 
 export function authSignup(payload: { name: string; email: string; password: string }) {
