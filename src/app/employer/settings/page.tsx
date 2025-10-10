@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,7 +9,6 @@ import {
 	Building2, 
 	Palette, 
 	Globe, 
-	FileText, 
 	Users,
 	Mail,
 	Trash2,
@@ -19,22 +18,57 @@ import {
 	Save,
 	AlertCircle,
 	CheckCircle,
-	UserPlus
+	UserPlus,
+	MapPin,
+	Clock
 } from 'lucide-react'
 import { CustomSelect } from '@/components/ui/custom-select'
 import Image from 'next/image'
+import { withAuth } from '@/components/hoc/withAuth'
+import { api } from '@/lib/authenticated-api'
 
 // Validation schema for company settings
 const companySettingsSchema = z.object({
+	subdomain: z.string().min(3, 'Subdomain must be at least 3 characters').regex(/^[a-z0-9-]+$/, 'Subdomain can only contain lowercase letters, numbers, and hyphens'),
 	companyName: z.string().min(2, 'Company name must be at least 2 characters'),
 	website: z.string().url('Please enter a valid website URL').optional().or(z.literal('')),
+	industry: z.string().min(1, 'Please select an industry'),
+	companySize: z.string().min(1, 'Please select company size'),
+	location: z.string().min(2, 'Location must be at least 2 characters'),
+	description: z.string().min(20, 'Description must be at least 20 characters').max(500, 'Description must be less than 500 characters'),
+	timezone: z.string().min(1, 'Please select a timezone'),
 	primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color format'),
 	secondaryColor: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color format'),
-	about: z.string().min(20, 'About section must be at least 20 characters').max(500, 'About section must be less than 500 characters'),
-	logo: z.string().optional(),
+	logoUrl: z.string().optional(),
 })
 
 type CompanySettingsForm = z.infer<typeof companySettingsSchema>
+
+interface CompanyProfile {
+	id: string
+	subdomain: string
+	companyName: string
+	logoUrl?: string
+	website?: string
+	industry: string
+	companySize: string
+	location: string
+	description: string
+	branding: {
+		primaryColor: string
+		secondaryColor: string
+	}
+	settings: {
+		timezone: string
+		jobPostingFrequency?: string
+	}
+	isActive: boolean
+	isVerified: boolean
+	subscriptionTier: string
+	subscriptionStatus: string
+	createdAt: string
+	updatedAt: string
+}
 
 interface TeamMember {
 	id: string
@@ -54,12 +88,58 @@ const roles = [
 	'HR Manager', 'Recruiter', 'Hiring Manager', 'Team Lead', 'Admin', 'Other'
 ]
 
-export default function CompanySettingsPage() {
+const industries = [
+	'Technology',
+	'Healthcare',
+	'Finance',
+	'Education',
+	'Retail',
+	'Manufacturing',
+	'Real Estate',
+	'Consulting',
+	'Media & Entertainment',
+	'Hospitality',
+	'Transportation',
+	'Energy',
+	'Other'
+]
+
+const companySizes = [
+	'1-10 employees',
+	'11-50 employees',
+	'51-200 employees',
+	'201-500 employees',
+	'501-1000 employees',
+	'1000+ employees'
+]
+
+const timezones = [
+	'America/New_York',
+	'America/Chicago',
+	'America/Denver',
+	'America/Los_Angeles',
+	'America/Anchorage',
+	'Pacific/Honolulu',
+	'Europe/London',
+	'Europe/Paris',
+	'Europe/Berlin',
+	'Asia/Tokyo',
+	'Asia/Shanghai',
+	'Asia/Dubai',
+	'Australia/Sydney',
+	'UTC'
+]
+
+function CompanySettingsPage() {
 	const router = useRouter()
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [isLoading, setIsLoading] = useState(true)
 	const [showSuccess, setShowSuccess] = useState(false)
 	const [logoPreview, setLogoPreview] = useState<string>('')
 	const [activeTab, setActiveTab] = useState<'general' | 'team'>('general')
+	const [logoFile, setLogoFile] = useState<File | null>(null)
+	const [fetchError, setFetchError] = useState<string>('')
+	const [originalData, setOriginalData] = useState<CompanySettingsForm | null>(null)
 
 	// Mock team members data
 	const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
@@ -105,20 +185,55 @@ export default function CompanySettingsPage() {
 		formState: { errors },
 		setValue,
 		watch,
+		reset,
 	} = useForm<CompanySettingsForm>({
 		resolver: zodResolver(companySettingsSchema),
-		defaultValues: {
-			companyName: 'TechCorp Inc.',
-			website: 'https://techcorp.com',
-			primaryColor: '#6366F1',
-			secondaryColor: '#10B981',
-			about: 'We are a leading technology company focused on building innovative solutions for modern businesses.',
-			logo: '',
-		},
 	})
 
 	const primaryColor = watch('primaryColor')
 	const secondaryColor = watch('secondaryColor')
+
+	// Fetch company profile on component mount
+	useEffect(() => {
+		const fetchCompanyProfile = async () => {
+			try {
+				setIsLoading(true)
+				setFetchError('')
+				
+				const result = await api.get<CompanyProfile>('/api/company/profile')
+				const profile = result.data
+				const formData: CompanySettingsForm = {
+					subdomain: profile.subdomain || '',
+					companyName: profile.companyName || '',
+					website: profile.website || '',
+					industry: profile.industry || '',
+					companySize: profile.companySize || '',
+					location: profile.location || '',
+					description: profile.description || '',
+					timezone: profile.settings?.timezone || '',
+					primaryColor: profile.branding?.primaryColor || '#6366F1',
+					secondaryColor: profile.branding?.secondaryColor || '#10B981',
+					logoUrl: profile.logoUrl || '',
+				}
+				
+				reset(formData)
+				// Store original data for change detection
+				setOriginalData(formData)
+
+				// Set logo preview if exists
+				if (profile.logoUrl) {
+					setLogoPreview(profile.logoUrl)
+				}
+			} catch (error) {
+				console.error('Error fetching company profile:', error)
+				setFetchError(error instanceof Error ? error.message : 'Failed to load company settings')
+			} finally {
+				setIsLoading(false)
+			}
+		}
+
+		fetchCompanyProfile()
+	}, [reset])
 
 	const getInputClasses = (hasError: boolean) => {
 		const baseClasses = 'w-full rounded-lg border backdrop-blur-sm px-4 py-3 text-sm text-white placeholder-white/60 outline-none transition-all duration-200'
@@ -140,8 +255,9 @@ export default function CompanySettingsPage() {
 		const file = e.target.files?.[0]
 		if (file) {
 			// Validate file type
-			if (!file.type.startsWith('image/')) {
-				alert('Please upload an image file')
+			const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml']
+			if (!allowedTypes.includes(file.type)) {
+				alert('Please upload a PNG, JPG, or SVG image')
 				return
 			}
 			
@@ -151,10 +267,13 @@ export default function CompanySettingsPage() {
 				return
 			}
 
+			// Store the file for upload
+			setLogoFile(file)
+
+			// Create preview
 			const reader = new FileReader()
 			reader.onloadend = () => {
 				setLogoPreview(reader.result as string)
-				setValue('logo', reader.result as string)
 			}
 			reader.readAsDataURL(file)
 		}
@@ -162,7 +281,8 @@ export default function CompanySettingsPage() {
 
 	const removeLogo = () => {
 		setLogoPreview('')
-		setValue('logo', '')
+		setLogoFile(null)
+		setValue('logoUrl', '')
 	}
 
 	const handleInviteMember = () => {
@@ -219,19 +339,101 @@ export default function CompanySettingsPage() {
 	const onSubmit = async (data: CompanySettingsForm) => {
 		setIsSubmitting(true)
 		try {
-			const response = await fetch('/api/company/settings', {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(data),
-			})
+			let logoUrl = data.logoUrl
 
-			const result = await response.json()
+			// Step 1: Upload logo if a new file was selected
+			if (logoFile) {
+				const formData = new FormData()
+				formData.append('file', logoFile)
 
-			if (!response.ok) {
-				throw new Error(result.message || 'Failed to update settings')
+				interface LogoUploadResponse {
+					logoUrl?: string
+					url?: string
+				}
+				const logoResult = await api.uploadFile<LogoUploadResponse>('/api/company/upload-logo', logoFile)
+				logoUrl = logoResult.data?.logoUrl || logoResult.data?.url
 			}
+
+			// Step 2: Build update payload with only changed fields
+			const profileData: Partial<{
+				subdomain: string
+				companyName: string
+				website: string
+				industry: string
+				companySize: string
+				location: string
+				description: string
+				branding: { primaryColor: string; secondaryColor: string }
+				settings: { timezone: string }
+				logoUrl: string
+			}> = {}
+
+			if (!originalData) {
+				throw new Error('Original data not loaded')
+			}
+
+			// Check each field for changes
+			if (data.subdomain !== originalData.subdomain) {
+				profileData.subdomain = data.subdomain
+			}
+			if (data.companyName !== originalData.companyName) {
+				profileData.companyName = data.companyName
+			}
+			if (data.website !== originalData.website) {
+				profileData.website = data.website
+			}
+			if (data.industry !== originalData.industry) {
+				profileData.industry = data.industry
+			}
+			if (data.companySize !== originalData.companySize) {
+				profileData.companySize = data.companySize
+			}
+			if (data.location !== originalData.location) {
+				profileData.location = data.location
+			}
+			if (data.description !== originalData.description) {
+				profileData.description = data.description
+			}
+
+			// Check branding colors
+			const brandingChanged = 
+				data.primaryColor !== originalData.primaryColor ||
+				data.secondaryColor !== originalData.secondaryColor
+
+			if (brandingChanged) {
+				profileData.branding = {
+					primaryColor: data.primaryColor,
+					secondaryColor: data.secondaryColor,
+				}
+			}
+
+			// Check timezone
+			if (data.timezone !== originalData.timezone) {
+				profileData.settings = {
+					timezone: data.timezone,
+				}
+			}
+
+			// Add logo if it was uploaded
+			if (logoFile && logoUrl) {
+				profileData.logoUrl = logoUrl
+			}
+
+			// Only send request if there are changes
+			if (Object.keys(profileData).length === 0) {
+				alert('No changes to save')
+				return
+			}
+
+			console.log('Sending update with changes:', profileData)
+
+			await api.put('/api/company/profile', profileData)
+
+			// Update original data with new values
+			setOriginalData({ ...originalData, ...data })
+			
+			// Clear logo file after successful save
+			setLogoFile(null)
 
 			// Show success message
 			setShowSuccess(true)
@@ -241,7 +443,7 @@ export default function CompanySettingsPage() {
 			}, 3000)
 		} catch (error) {
 			console.error('Error updating settings:', error)
-			alert('Failed to update settings. Please try again.')
+			alert(error instanceof Error ? error.message : 'Failed to update settings. Please try again.')
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -375,6 +577,39 @@ export default function CompanySettingsPage() {
 					</p>
 				</div>
 
+				{/* Loading State */}
+				{isLoading && (
+					<div className="flex items-center justify-center py-20">
+						<div className="text-center">
+							<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4" />
+							<p className="text-white/60">Loading company settings...</p>
+						</div>
+					</div>
+				)}
+
+				{/* Error State */}
+				{fetchError && !isLoading && (
+					<div className="rounded-2xl border border-red-500/30 bg-red-500/10 backdrop-blur-xl p-6 mb-6">
+						<div className="flex items-center gap-3 text-red-400">
+							<AlertCircle className="w-5 h-5" />
+							<div>
+								<h3 className="font-semibold mb-1">Failed to load settings</h3>
+								<p className="text-sm">{fetchError}</p>
+							</div>
+						</div>
+						<button
+							onClick={() => window.location.reload()}
+							className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+						>
+							Retry
+						</button>
+					</div>
+				)}
+
+				{/* Main Content - Only show when not loading and no error */}
+				{!isLoading && !fetchError && (
+					<>
+
 				{/* Tabs */}
 				<div className="flex gap-2 mb-6 border-b border-white/10">
 					<button
@@ -419,26 +654,132 @@ export default function CompanySettingsPage() {
 								</div>
 
 								<div className="space-y-4">
-									<div>
-										<label className="block text-sm font-medium text-white/90 mb-2">
-											Company Name *
-										</label>
-										<input
-											{...register('companyName')}
-											className={getInputClasses(!!errors.companyName)}
-											placeholder="Enter company name"
-										/>
-										{errors.companyName && (
-											<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-												<AlertCircle className="w-4 h-4" />
-												{errors.companyName.message}
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<div>
+											<label className="block text-sm font-medium text-white/90 mb-2">
+												Company Name *
+											</label>
+											<input
+												{...register('companyName')}
+												className={getInputClasses(!!errors.companyName)}
+												placeholder="Enter company name"
+											/>
+											{errors.companyName && (
+												<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+													<AlertCircle className="w-4 h-4" />
+													{errors.companyName.message}
+												</p>
+											)}
+										</div>
+
+										<div>
+											<label className="block text-sm font-medium text-white/90 mb-2">
+												Subdomain *
+											</label>
+											<input
+												{...register('subdomain')}
+												className={getInputClasses(!!errors.subdomain)}
+												placeholder="your-company-name"
+											/>
+											{errors.subdomain && (
+												<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+													<AlertCircle className="w-4 h-4" />
+													{errors.subdomain.message}
+												</p>
+											)}
+											<p className="text-white/50 text-xs mt-1">
+												Your company page will be at: {watch('subdomain') || 'subdomain'}.yourdomain.com
 											</p>
-										)}
+										</div>
+									</div>
+
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<div>
+											<label className="block text-sm font-medium text-white/90 mb-2">
+												Industry *
+											</label>
+											<CustomSelect
+												options={industries.map(ind => ({ value: ind, label: ind }))}
+												value={watch('industry') || ''}
+												onChange={(value) => setValue('industry', value)}
+												placeholder="Select industry"
+											/>
+											{errors.industry && (
+												<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+													<AlertCircle className="w-4 h-4" />
+													{errors.industry.message}
+												</p>
+											)}
+										</div>
+
+										<div>
+											<label className="block text-sm font-medium text-white/90 mb-2">
+												Company Size *
+											</label>
+											<CustomSelect
+												options={companySizes.map(size => ({ value: size, label: size }))}
+												value={watch('companySize') || ''}
+												onChange={(value) => setValue('companySize', value)}
+												placeholder="Select company size"
+											/>
+											{errors.companySize && (
+												<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+													<AlertCircle className="w-4 h-4" />
+													{errors.companySize.message}
+												</p>
+											)}
+										</div>
+									</div>
+
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										<div>
+											<label className="block text-sm font-medium text-white/90 mb-2">
+												<span className="flex items-center gap-2">
+													<MapPin className="w-4 h-4" />
+													Location *
+												</span>
+											</label>
+											<input
+												{...register('location')}
+												className={getInputClasses(!!errors.location)}
+												placeholder="e.g., Remote, San Francisco, CA"
+											/>
+											{errors.location && (
+												<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+													<AlertCircle className="w-4 h-4" />
+													{errors.location.message}
+												</p>
+											)}
+										</div>
+
+										<div>
+											<label className="block text-sm font-medium text-white/90 mb-2">
+												<span className="flex items-center gap-2">
+													<Clock className="w-4 h-4" />
+													Timezone *
+												</span>
+											</label>
+											<CustomSelect
+												options={timezones.map(tz => ({ value: tz, label: tz.replace(/_/g, ' ') }))}
+												value={watch('timezone') || ''}
+												onChange={(value) => setValue('timezone', value)}
+												placeholder="Select timezone"
+											/>
+											{errors.timezone && (
+												<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
+													<AlertCircle className="w-4 h-4" />
+													{errors.timezone.message}
+												</p>
+											)}
+										</div>
 									</div>
 
 									<div>
 										<label className="block text-sm font-medium text-white/90 mb-2">
-											Website
+											<span className="flex items-center gap-2">
+												<Globe className="w-4 h-4" />
+												Website
+											</span>
 										</label>
 										<input
 											{...register('website')}
@@ -455,22 +796,22 @@ export default function CompanySettingsPage() {
 
 									<div>
 										<label className="block text-sm font-medium text-white/90 mb-2">
-											About Company *
+											Company Description *
 										</label>
 										<textarea
-											{...register('about')}
+											{...register('description')}
 											rows={4}
-											className={getTextareaClasses(!!errors.about)}
+											className={getTextareaClasses(!!errors.description)}
 											placeholder="Tell us about your company..."
 										/>
-										{errors.about && (
+										{errors.description && (
 											<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
 												<AlertCircle className="w-4 h-4" />
-												{errors.about.message}
+												{errors.description.message}
 											</p>
 										)}
 										<p className="text-white/50 text-xs mt-1">
-											{watch('about')?.length || 0} / 500 characters
+											{watch('description')?.length || 0} / 500 characters
 										</p>
 									</div>
 								</div>
@@ -492,11 +833,15 @@ export default function CompanySettingsPage() {
 												<Image
 													src={logoPreview}
 													alt="Company logo"
+													width={128}
+													height={128}
 													className="w-full h-full object-contain rounded"
 												/>
 											</div>
 											<div className="flex-1">
-												<p className="text-white/90 text-sm mb-2">Logo uploaded successfully</p>
+												<p className="text-white/90 text-sm mb-2">
+													{logoFile ? 'New logo selected (will be uploaded on save)' : 'Current company logo'}
+												</p>
 												<button
 													type="button"
 													onClick={removeLogo}
@@ -734,7 +1079,11 @@ export default function CompanySettingsPage() {
 						</div>
 					</div>
 				)}
+				</>
+				)}
 			</div>
 		</main>
 	)
 }
+
+export default withAuth(CompanySettingsPage)

@@ -2,16 +2,23 @@
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
+// Use Next.js proxy routes on the same origin to avoid CORS in the browser.
+const API_BASE_PATH = '/api'
 
 async function request<T>(path: string, options?: { method?: HttpMethod; body?: unknown; token?: string }) {
 	const { method = 'GET', body, token } = options || {}
-	const res = await fetch(`${API_BASE_URL}${path}`, {
+	const url = `${API_BASE_PATH}${path}`
+	const headers: Record<string, string> = {}
+	// Only set JSON content-type when sending a JSON body
+	if (body && !(body instanceof FormData)) {
+		headers['Content-Type'] = 'application/json'
+	}
+	if (token) headers['Authorization'] = `Bearer ${token}`
+
+	const res = await fetch(url, {
 		method,
-		headers: {
-			'Content-Type': 'application/json',
-			...(token ? { Authorization: `Bearer ${token}` } : {}),
-		},
+		headers,
+		credentials: 'include',
 		...(body ? { body: JSON.stringify(body) } : {}),
 	})
 
@@ -33,9 +40,34 @@ async function request<T>(path: string, options?: { method?: HttpMethod; body?: 
 }
 
 export interface LoginResponse {
-	accessToken: string
+	message: string
+	needsCompanySetup?: boolean
+	profile?: {
+		id: string
+		email: string
+		role: string
+		company_id?: string
+		onboarding_completed?: boolean
+	} | null
+	redirectUrl?: string
+	companyId?: string | null
+	subdomain?: string | null
+	session?: {
+		access_token: string
+		refresh_token?: string
+		expires_at: number
+	}
+	user?: {
+		id: string
+		email: string
+		role?: string
+	}
+	// Legacy format support (camelCase)
+	accessToken?: string
 	refreshToken?: string
-	user?: { id: string; email: string; role?: string }
+	// Snake_case format support
+	access_token?: string
+	refresh_token?: string
 }
 
 export function authLogin(payload: { email: string; password: string }) {

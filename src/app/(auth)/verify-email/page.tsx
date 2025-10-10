@@ -2,8 +2,8 @@
 
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, Suspense } from 'react'
-import { authVerifyEmail } from '@/lib/api'
-import { authResetPassword } from '@/lib/api'
+import { authVerifyEmail, authResetPassword } from '@/lib/api'
+import { setAccessToken } from '@/lib/auth-utils'
 
 function ResetPasswordForm({ accessToken }: { accessToken: string }) {
 	const [password, setPassword] = useState('')
@@ -66,7 +66,7 @@ function VerifyEmailContent() {
 	const searchParams = useSearchParams()
 	const router = useRouter()
 	const [email, setEmail] = useState(searchParams.get('email') || '')
-	const [accessToken, setAccessToken] = useState('')
+	const [accessToken, setAccessTokenState] = useState('')
 	const [refreshToken, setRefreshToken] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -85,14 +85,13 @@ function VerifyEmailContent() {
 			console.log('Verify email response:', res)
 			
 			// Store session tokens - user is now logged in
-			// Handle both camelCase and snake_case response formats
-			const resData = res as unknown as Record<string, unknown>
-			const accessTokenFromResponse = (resData?.accessToken as string) || (resData?.access_token as string)
-			const refreshTokenFromResponse = (resData?.refreshToken as string) || (resData?.refresh_token as string)
+			// Handle different response formats: session.access_token or direct accessToken
+			const accessTokenFromResponse = res?.session?.access_token || res?.accessToken || res?.access_token
+			const refreshTokenFromResponse = res?.session?.refresh_token || res?.refreshToken || res?.refresh_token
 			
 			if (accessTokenFromResponse) {
-				console.log('Storing access token in localStorage')
-				localStorage.setItem('accessToken', accessTokenFromResponse)
+				console.log('Storing access token in localStorage and cookies (with subdomain support)')
+				setAccessToken(accessTokenFromResponse)
 				if (refreshTokenFromResponse) {
 					console.log('Storing refresh token in localStorage')
 					localStorage.setItem('refreshToken', refreshTokenFromResponse)
@@ -100,17 +99,18 @@ function VerifyEmailContent() {
 			} else {
 				console.warn('No access token in response, using tokens from URL')
 				// Fallback: use the tokens from the URL if backend doesn't return new ones
-				localStorage.setItem('accessToken', access_token)
+				setAccessToken(access_token)
 				localStorage.setItem('refreshToken', refresh_token)
 			}
 			
-			// Verify tokens were stored
-			const storedToken = localStorage.getItem('accessToken')
-			console.log('Token stored successfully:', storedToken ? 'Yes' : 'No')
-			
 			setSuccess(true)
-			// Redirect to company onboarding since user is now authenticated
-			setTimeout(() => router.push('/company/onboarding'), 2000)
+			
+			// Check if user needs company setup
+			const needsSetup = res?.needsCompanySetup === true || res?.profile === null
+			const redirectPath = needsSetup ? '/company/onboarding' : '/employer'
+			
+			console.log('Email verified, redirecting to:', redirectPath)
+			setTimeout(() => router.push(redirectPath), 2000)
 		} catch (e) {
 			console.error('Error during email verification:', e)
 			setError((e as Error).message)
@@ -134,7 +134,7 @@ function VerifyEmailContent() {
 			setType(urlType)
 			
 			if (access_token && urlType === 'recovery') {
-				setAccessToken(access_token)
+				setAccessTokenState(access_token)
 				// Verify recovery token first
 				const verifyRecovery = async () => {
 					try {
@@ -148,7 +148,7 @@ function VerifyEmailContent() {
 			}
 
 			if (access_token && refresh_token && urlType === 'signup') {
-				setAccessToken(access_token)
+				setAccessTokenState(access_token)
 				setRefreshToken(refresh_token)
 				
 				// Extract email from JWT token for display purposes

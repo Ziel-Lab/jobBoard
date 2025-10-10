@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+SUBDOMAIN_API_MIGRATION.md
+SUBDOMAIN_AUTH.md
+SUPABASE_SUBDOMAIN_SETUP.md
+QUICK_START.md
+AUTHENTICATION.md

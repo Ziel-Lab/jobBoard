@@ -11,7 +11,6 @@ import {
 	FolderOpen, 
 	Search, 
 	Settings, 
-	Calendar,
 	MapPin,
 	DollarSign,
 	Clock,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react'
 import SpotlightCard from '@/components/ui/SpotlightCard'
 import CountUp from '@/components/ui/CountUp'
+import EmployerNavbar from '@/components/ui/employer-navbar'
 import type { Job } from '@/types/job'
 
 interface DashboardStats {
@@ -121,22 +121,24 @@ export default function DashboardClient({ stats, recentJobs }: DashboardClientPr
 	]
 
 	return (
-		<main className="min-h-screen bg-black relative overflow-hidden">
-			{/* Ambient light effects */}
-			<div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
-			<div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-			<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl" />
+		<>
+			<EmployerNavbar />
+			<main className="min-h-screen bg-black relative overflow-hidden">
+				{/* Ambient light effects */}
+				<div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
+				<div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+				<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl" />
 
-			<div className="relative z-10 mx-auto w-full max-w-7xl px-4 pt-8 pb-16">
-				{/* Header */}
-				<div className="mb-8">
-					<h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-						Employer Dashboard
-					</h1>
-					<p className="text-white/60 text-sm sm:text-base">
-						Welcome back! Here&apos;s an overview of your recruitment activity.
-					</p>
-				</div>
+				<div className="relative z-10 mx-auto w-full max-w-7xl px-4 pt-8 pb-16">
+					{/* Header */}
+					<div className="mb-8">
+						<h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+							Employer Dashboard
+						</h1>
+						<p className="text-white/60 text-sm sm:text-base">
+							Welcome back! Here&apos;s an overview of your recruitment activity.
+						</p>
+					</div>
 
 				{/* Stats Cards */}
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
@@ -325,5 +327,6 @@ export default function DashboardClient({ stats, recentJobs }: DashboardClientPr
 				</div>
 			</div>
 		</main>
+		</>
 	)
 }
