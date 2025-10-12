@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ChevronLeft, ChevronRight, Building2, Users, Settings, CheckCircle } from 'lucide-react'
 import { CustomSelect } from '@/components/ui/custom-select'
+import { buildSubdomainUrl } from '@/lib/subdomain-utils'
 
 // Validation schemas for each step
 const companyDetailsSchema = z.object({
@@ -179,8 +180,8 @@ export default function CompanyOnboardingPage() {
 			const teamData = teamForm.getValues()
 			const preferencesData = preferencesForm.getValues()
 
-			// Get access token from localStorage
-			const accessToken = localStorage.getItem('accessToken')
+			// Get access token from localStorage (use snake_case to match auth-utils.ts)
+			const accessToken = localStorage.getItem('access_token')
 			console.log('Access Token:', accessToken ? 'Found' : 'Not found')
 			
 			if (!accessToken) {
@@ -245,9 +246,22 @@ export default function CompanyOnboardingPage() {
 			// Show success message briefly before redirecting
 			setShowSuccess(true)
 			
-			// Redirect to employer dashboard after 2 seconds
+			// Get subdomain from backend response
+			const subdomain = result.subdomain || result.data?.subdomain
+			console.log('Onboarding complete. Subdomain:', subdomain)
+			
+			// Redirect to company subdomain employer dashboard after 2 seconds
 			setTimeout(() => {
-				window.location.href = '/employer'
+				if (subdomain) {
+					// Redirect to company subdomain (e.g., http://company-xyz.localhost:3000/employer)
+					const subdomainUrl = buildSubdomainUrl(subdomain, '/employer')
+					console.log('Redirecting to subdomain:', subdomainUrl)
+					window.location.href = subdomainUrl
+				} else {
+					// Fallback to local /employer if no subdomain provided
+					console.warn('No subdomain in response, redirecting to /employer')
+					window.location.href = '/employer'
+				}
 			}, 2000)
 		} catch (error) {
 			console.error('Error submitting onboarding:', error)

@@ -17,7 +17,13 @@ interface LoginResponse {
   expiresAt?: number
   userId?: string
   needsCompanySetup?: boolean
-  profile: Record<string, unknown> | null
+  profile?: {
+    id: string
+    email: string
+    role: string
+    company_id?: string
+    onboarding_completed?: boolean
+  } | null
   redirectUrl?: string
   subdomain?: string
 }
@@ -62,7 +68,12 @@ function LoginForm() {
       )
       
       // Handle redirect based on response
-      const needsSetup = res?.needsCompanySetup === true || res?.profile === null
+      // Check multiple conditions to determine if onboarding is needed
+      const needsSetup = 
+        res?.needsCompanySetup === true || 
+        !res?.profile || 
+        res?.profile?.onboarding_completed === false ||
+        !res?.profile?.company_id
       
       if (needsSetup) {
         // User has NOT completed company setup → redirect to onboarding

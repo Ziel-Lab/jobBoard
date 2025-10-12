@@ -105,11 +105,24 @@ function VerifyEmailContent() {
 			
 			setSuccess(true)
 			
-			// Check if user needs company setup
-			const needsSetup = res?.needsCompanySetup === true || res?.profile === null
+			// Check if user needs company setup - be more thorough
+			// A user needs onboarding if:
+			// 1. Backend explicitly says so (needsCompanySetup: true)
+			// 2. Profile is null or undefined
+			// 3. Profile exists but onboarding_completed is false
+			// 4. Profile exists but has no company_id
+			const needsSetup = 
+				res?.needsCompanySetup === true || 
+				!res?.profile || 
+				res?.profile?.onboarding_completed === false ||
+				!res?.profile?.company_id
+			
 			const redirectPath = needsSetup ? '/company/onboarding' : '/employer'
 			
-			console.log('Email verified, redirecting to:', redirectPath)
+			console.log('Email verified. Profile:', res?.profile)
+			console.log('needsCompanySetup:', res?.needsCompanySetup)
+			console.log('Calculated needsSetup:', needsSetup)
+			console.log('Redirecting to:', redirectPath)
 			setTimeout(() => router.push(redirectPath), 2000)
 		} catch (e) {
 			console.error('Error during email verification:', e)
