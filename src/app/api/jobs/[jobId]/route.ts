@@ -87,21 +87,35 @@ async function proxyRequest(
 	}
 }
 
-export async function GET(
-	req: NextRequest,
-	{ params }: { params: { jobId: string } }
-) {
-	const jobId = params.jobId
-	return proxyRequest(req, `/jobs/${jobId}`, 'GET')
+function getJobIdFromRequest(req: NextRequest): string | null {
+    const pathname = req.nextUrl.pathname
+    const parts = pathname.split('/')
+    const idx = parts.findIndex(p => p === 'jobs')
+    if (idx !== -1 && parts[idx + 1]) return decodeURIComponent(parts[idx + 1])
+    return null
 }
 
-export async function PUT(
-	req: NextRequest,
-	{ params }: { params: { jobId: string } }
-) {
+export async function GET(req: NextRequest) {
+    const jobId = getJobIdFromRequest(req)
+    if (!jobId) {
+        return NextResponse.json(
+            { success: false, message: 'Missing jobId', data: null },
+            { status: 400 }
+        )
+    }
+    return proxyRequest(req, `/jobs/${jobId}`, 'GET')
+}
+
+export async function PUT(req: NextRequest) {
 	try {
 		const body = await req.json()
-		const jobId = params.jobId
+        const jobId = getJobIdFromRequest(req)
+        if (!jobId) {
+            return NextResponse.json(
+                { success: false, message: 'Missing jobId', data: null },
+                { status: 400 }
+            )
+        }
 		return proxyRequest(req, `/jobs/${jobId}`, 'PUT', body)
 	} catch (error) {
 		console.error('[Jobs API] Error parsing request body:', error)
@@ -112,11 +126,14 @@ export async function PUT(
 	}
 }
 
-export async function DELETE(
-	req: NextRequest,
-	{ params }: { params: { jobId: string } }
-) {
-	const jobId = params.jobId
+export async function DELETE(req: NextRequest) {
+    const jobId = getJobIdFromRequest(req)
+    if (!jobId) {
+        return NextResponse.json(
+            { success: false, message: 'Missing jobId', data: null },
+            { status: 400 }
+        )
+    }
 	return proxyRequest(req, `/jobs/${jobId}`, 'DELETE')
 }
 

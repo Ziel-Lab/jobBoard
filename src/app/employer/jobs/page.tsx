@@ -386,7 +386,7 @@ export default function ManageJobsPage() {
 								<div className="pt-4 border-t border-white/10 space-y-2">
 									<div className="grid grid-cols-2 gap-2">
 										<Link
-											href={`/employer/jobs/${job.id}`}
+											href={`/jobs/${job.id}`}
 											className="px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-600/30 rounded-lg transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1"
 										>
 											<Eye className="w-4 h-4" />

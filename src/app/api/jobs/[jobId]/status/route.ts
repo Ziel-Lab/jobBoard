@@ -88,12 +88,20 @@ async function proxyRequest(
 }
 
 export async function PATCH(
-	req: NextRequest,
-	{ params }: { params: { jobId: string } }
+    req: NextRequest
 ) {
 	try {
 		const body = await req.json()
-		const jobId = params.jobId
+        const pathname = req.nextUrl.pathname
+        const parts = pathname.split('/')
+        const idx = parts.findIndex(p => p === 'jobs')
+        const jobId = idx !== -1 && parts[idx + 1] ? decodeURIComponent(parts[idx + 1]) : null
+        if (!jobId) {
+            return NextResponse.json(
+                { success: false, message: 'Missing jobId', data: null },
+                { status: 400 }
+            )
+        }
 		return proxyRequest(req, `/jobs/${jobId}/status`, 'PATCH', body)
 	} catch (error) {
 		console.error('[Jobs API] Error parsing request body:', error)

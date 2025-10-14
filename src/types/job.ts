@@ -1,10 +1,10 @@
 export interface Job {
   id: string
-  job_title: string
+  jobTitle: string
   company?: string
   officeLocation: string
   isRemote: boolean
-  employmentype: 'full_time' | 'part_time' | 'contract' | 'internship'
+  employmentType: 'full_time' | 'part_time' | 'contract' | 'internship'
   experienceLevel: 'entry' | 'mid' | 'senior' | 'lead'
   minSalary?: number
   maxSalary?: number
@@ -80,6 +80,15 @@ export interface PaginatedJobsResponse {
 
 export interface JobStatusChangeInput {
   status: 'draft' | 'published' | 'paused' | 'closed'
+}
+
+
+// Lightweight pagination shape used by jobs listing page
+export interface PaginatedJobs {
+  items: Job[]
+  page: number
+  pageSize: number
+  total: number
 }
 
 
