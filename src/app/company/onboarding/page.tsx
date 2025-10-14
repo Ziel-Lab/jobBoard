@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { ChevronLeft, ChevronRight, Building2, Users, Settings, CheckCircle } from 'lucide-react'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { buildSubdomainUrl } from '@/lib/subdomain-utils'
+import { withAuth } from '@/components/hoc/withAuth'
 
 // Validation schemas for each step
 const companyDetailsSchema = z.object({
@@ -90,7 +91,7 @@ const timezones = [
 	{ label: 'Auckland, Wellington', value: 'Pacific/Auckland' },
 ]
 
-export default function CompanyOnboardingPage() {
+function CompanyOnboardingPage() {
 	const [currentStep, setCurrentStep] = useState(1)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [completedSteps, setCompletedSteps] = useState<number[]>([])
@@ -727,3 +728,5 @@ export default function CompanyOnboardingPage() {
 		</main>
 	)
 }
+
+export default withAuth(CompanyOnboardingPage)
