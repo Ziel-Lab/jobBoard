@@ -8,15 +8,19 @@ export default {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
       keyframes: {
-              shine: {
-                  '0%': { 'background-position': '100%' },
-                  '100%': { 'background-position': '-100%' },
-                },
-              },
-              animation: {
-                shine: 'shine 5s linear infinite',
-              },
+        shine: {
+          '0%': { 'background-position': '100%' },
+          '100%': { 'background-position': '-100%' },
+        },
+      },
+      animation: {
+        shine: 'shine 5s linear infinite',
+      },
     },
   },
   plugins: [],
