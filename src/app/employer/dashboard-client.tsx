@@ -240,12 +240,12 @@ export default function DashboardClient({ stats, recentJobs }: DashboardClientPr
 											</div>
 											<div className="flex-1">
 												<h3 className="text-lg font-semibold text-white mb-1">
-													{job.title}
+													{job.jobTitle}
 												</h3>
 												<div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
 													<span className="flex items-center gap-1">
 														<MapPin className="w-4 h-4" />
-														{job.location}
+														{job.officeLocation}
 													</span>
 													{job.isRemote && (
 														<span className="px-2 py-0.5 text-xs font-semibold text-emerald-300 bg-emerald-500/20 rounded-full border border-emerald-500/30">
@@ -254,18 +254,18 @@ export default function DashboardClient({ stats, recentJobs }: DashboardClientPr
 													)}
 													<span className="flex items-center gap-1">
 														<Clock className="w-4 h-4" />
-														{new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+														{new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
 													</span>
 												</div>
 											</div>
 										</div>
 
 										<p className="text-white/70 text-sm mb-3 line-clamp-2">
-											{job.description}
+											{job?.jobDescription}
 										</p>
 
 										<div className="flex flex-wrap gap-2">
-											{job.skills.slice(0, 5).map((skill) => (
+											{job?.requiredSkills.slice(0, 5).map((skill) => (
 												<span
 													key={skill}
 													className="px-2.5 py-1 text-xs font-medium text-white/80 bg-white/10 border border-white/20 rounded-full"
@@ -273,9 +273,9 @@ export default function DashboardClient({ stats, recentJobs }: DashboardClientPr
 													{skill}
 												</span>
 											))}
-											{job.skills.length > 5 && (
+											{job.requiredSkills.length > 5 && (
 												<span className="px-2.5 py-1 text-xs font-medium text-white/60 bg-white/5 border border-white/15 rounded-full">
-													+{job.skills.length - 5}
+													+{job.requiredSkills.length - 5}
 												</span>
 											)}
 										</div>
@@ -286,8 +286,8 @@ export default function DashboardClient({ stats, recentJobs }: DashboardClientPr
 										<div>
 											<div className="flex items-center gap-1 text-emerald-400 font-semibold text-base mb-1">
 												<DollarSign className="w-4 h-4" />
-												{job.salaryMin
-													? `${job.salaryMin.toLocaleString()} - ${job.salaryMax?.toLocaleString()}`
+												{job.minSalary
+													? `${job.minSalary.toLocaleString()} - ${job.maxSalary?.toLocaleString()}`
 													: 'Not disclosed'}
 											</div>
 											<div className="text-white/50 text-xs capitalize">

@@ -48,6 +48,10 @@ export function middleware(request: NextRequest) {
 		const accessToken = request.cookies.get('accessToken')?.value
 		
 		if (!accessToken) {
+			// Debug: Log all cookies for troubleshooting
+			console.log('[Middleware] No accessToken found for protected route:', pathname)
+			console.log('[Middleware] Available cookies:', request.cookies.getAll().map(c => c.name).join(', '))
+			
 			// No token found, redirect to login on main domain
 			const subdomain = getSubdomainFromRequest(request)
 			
@@ -65,16 +69,20 @@ export function middleware(request: NextRequest) {
 				)
 				loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
 				
+				console.log('[Middleware] Redirecting to login from subdomain:', loginUrl.toString())
 				return NextResponse.redirect(loginUrl)
 			}
 			
 			// Already on main domain, redirect to login
 			const loginUrl = new URL('/login', request.url)
 			loginUrl.searchParams.set('redirect', pathname)
+			console.log('[Middleware] Redirecting to login:', loginUrl.toString())
 			return NextResponse.redirect(loginUrl)
 		}
 		
 		// User is authenticated
+		console.log('[Middleware] Access granted to protected route:', pathname)
+		
 		// Add subdomain to response headers for debugging
 		const response = NextResponse.next()
 		const subdomain = getSubdomainFromRequest(request)

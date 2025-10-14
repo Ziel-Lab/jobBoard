@@ -18,31 +18,37 @@ import {
 	AlertCircle
 } from 'lucide-react'
 import { CustomSelect } from '@/components/ui/custom-select'
+import { jobsApi } from '@/lib/jobs-api'
 
 // Validation schema for job posting
 const jobPostingSchema = z.object({
-	title: z.string().min(3, 'Job title must be at least 3 characters'),
-	location: z.string().min(2, 'Location is required'),
+	jobTitle: z.string().min(3, 'Job title must be at least 3 characters'),
+	officeLocation: z.string().min(2, 'Location is required'),
 	isRemote: z.boolean(),
-	employmentType: z.enum(['full-time', 'part-time', 'contract', 'internship'], 'Please select an employment type'),
-	experienceLevel: z.enum(['entry', 'mid', 'senior', 'lead'], 'Please select an experience level'),
-	salaryMin: z.number().min(0, 'Minimum salary must be positive').optional(),
-	salaryMax: z.number().min(0, 'Maximum salary must be positive').optional(),
+	employmentType: z.enum(['full_time', 'part_time', 'contract', 'internship'], {
+		message: 'Please select an employment type'
+	}),
+	experienceLevel: z.enum(['entry', 'mid', 'senior', 'lead'], {
+		message: 'Please select an experience level'
+	}),
+	minSalary: z.number().min(0, 'Minimum salary must be positive').optional(),
+	maxSalary: z.number().min(0, 'Maximum salary must be positive').optional(),
 	currency: z.enum(['USD', 'EUR', 'GBP', 'INR']),
-	description: z.string().min(50, 'Description must be at least 50 characters'),
-	responsibilities: z.string().min(20, 'Responsibilities must be at least 20 characters'),
-	requirements: z.string().min(20, 'Requirements must be at least 20 characters'),
-	benefits: z.string().optional(),
-	skills: z.array(z.string()).min(1, 'Add at least one skill'),
+	jobDescription: z.string().min(50, 'Description must be at least 50 characters'),
+	keyResponsibilities: z.string().min(20, 'Responsibilities must be at least 20 characters'),
+	requirementsQualifications: z.string().min(20, 'Requirements must be at least 20 characters'),
+	benefitsPerks: z.string().optional(),
+	requiredSkills: z.array(z.string()).min(1, 'Add at least one skill'),
 	applicationDeadline: z.string().optional(),
+	jobStatus: z.enum(['draft', 'published']).optional(),
 }).refine((data) => {
-	if (data.salaryMin && data.salaryMax) {
-		return data.salaryMax >= data.salaryMin
+	if (data.minSalary && data.maxSalary) {
+		return data.maxSalary >= data.minSalary
 	}
 	return true
 }, {
 	message: 'Maximum salary must be greater than minimum salary',
-	path: ['salaryMax'],
+	path: ['maxSalary'],
 })
 
 type JobPostingForm = z.infer<typeof jobPostingSchema>
@@ -66,11 +72,12 @@ export default function PostNewJobPage() {
 		defaultValues: {
 			isRemote: false,
 			currency: 'USD',
-			skills: [],
+			requiredSkills: [],
+			jobStatus: 'draft',
 		},
 	})
 
-	const skills = watch('skills') || []
+	const skills = watch('requiredSkills') || []
 	const isRemote = watch('isRemote')
 	const employmentType = watch('employmentType')
 	const experienceLevel = watch('experienceLevel')
@@ -110,15 +117,15 @@ export default function PostNewJobPage() {
 			return
 		}
 
-		setValue('skills', [...skills, trimmedSkill])
+		setValue('requiredSkills', [...skills, trimmedSkill])
 		setCurrentSkill('')
 		setSkillError('')
-		trigger('skills')
+		trigger('requiredSkills')
 	}
 
 	const removeSkill = (skillToRemove: string) => {
-		setValue('skills', skills.filter(s => s !== skillToRemove))
-		trigger('skills')
+		setValue('requiredSkills', skills.filter(s => s !== skillToRemove))
+		trigger('requiredSkills')
 	}
 
 	const handleSkillKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -131,18 +138,11 @@ export default function PostNewJobPage() {
 	const onSubmit = async (data: JobPostingForm) => {
 		setIsSubmitting(true)
 		try {
-			const response = await fetch('/api/jobs', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(data),
-			})
+			// Use the authenticated API client instead of direct fetch
+			const createdJob = await jobsApi.createJob(data)
 
-			const result = await response.json()
-
-			if (!response.ok) {
-				throw new Error(result.message || 'Failed to post job')
+			if (!createdJob) {
+				throw new Error('Failed to create job')
 			}
 
 			// Show success message
@@ -154,7 +154,8 @@ export default function PostNewJobPage() {
 			}, 2000)
 		} catch (error) {
 			console.error('Error posting job:', error)
-			alert('Failed to post job. Please try again.')
+			const errorMessage = error instanceof Error ? error.message : 'Failed to post job. Please try again.'
+			alert(errorMessage)
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -230,14 +231,14 @@ export default function PostNewJobPage() {
 										Job Title *
 									</label>
 									<input
-										{...register('title')}
-										className={getInputClasses(!!errors.title)}
+										{...register('jobTitle')}
+										className={getInputClasses(!!errors.jobTitle)}
 										placeholder="e.g. Senior Frontend Developer"
 									/>
-									{errors.title && (
+									{errors.jobTitle && (
 										<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
 											<AlertCircle className="w-4 h-4" />
-											{errors.title.message}
+											{errors.jobTitle.message}
 										</p>
 									)}
 								</div>
@@ -249,8 +250,8 @@ export default function PostNewJobPage() {
 										</label>
 										<CustomSelect
 											options={[
-												{ value: 'full-time', label: 'Full-time' },
-												{ value: 'part-time', label: 'Part-time' },
+												{ value: 'full_time', label: 'Full-time' },
+												{ value: 'part_time', label: 'Part-time' },
 												{ value: 'contract', label: 'Contract' },
 												{ value: 'internship', label: 'Internship' },
 											]}
@@ -297,14 +298,14 @@ export default function PostNewJobPage() {
 										Office Location *
 									</label>
 									<input
-										{...register('location')}
-										className={getInputClasses(!!errors.location)}
+										{...register('officeLocation')}
+										className={getInputClasses(!!errors.officeLocation)}
 										placeholder="e.g. San Francisco, CA"
 									/>
-									{errors.location && (
+									{errors.officeLocation && (
 										<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
 											<AlertCircle className="w-4 h-4" />
-											{errors.location.message}
+											{errors.officeLocation.message}
 										</p>
 									)}
 								</div>
@@ -363,14 +364,14 @@ export default function PostNewJobPage() {
 										</label>
 										<input
 											type="number"
-											{...register('salaryMin', { valueAsNumber: true })}
-											className={getInputClasses(!!errors.salaryMin)}
+											{...register('minSalary', { valueAsNumber: true })}
+											className={getInputClasses(!!errors.minSalary)}
 											placeholder="e.g. 80000"
 										/>
-										{errors.salaryMin && (
+										{errors.minSalary && (
 											<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
 												<AlertCircle className="w-4 h-4" />
-												{errors.salaryMin.message}
+												{errors.minSalary.message}
 											</p>
 										)}
 									</div>
@@ -381,14 +382,14 @@ export default function PostNewJobPage() {
 										</label>
 										<input
 											type="number"
-											{...register('salaryMax', { valueAsNumber: true })}
-											className={getInputClasses(!!errors.salaryMax)}
+											{...register('maxSalary', { valueAsNumber: true })}
+											className={getInputClasses(!!errors.maxSalary)}
 											placeholder="e.g. 120000"
 										/>
-										{errors.salaryMax && (
+										{errors.maxSalary && (
 											<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
 												<AlertCircle className="w-4 h-4" />
-												{errors.salaryMax.message}
+												{errors.maxSalary.message}
 											</p>
 										)}
 									</div>
@@ -414,15 +415,15 @@ export default function PostNewJobPage() {
 										Job Description *
 									</label>
 									<textarea
-										{...register('description')}
+										{...register('jobDescription')}
 										rows={5}
-										className={getTextareaClasses(!!errors.description)}
+										className={getTextareaClasses(!!errors.jobDescription)}
 										placeholder="Describe the role and what the candidate will be doing..."
 									/>
-									{errors.description && (
+									{errors.jobDescription && (
 										<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
 											<AlertCircle className="w-4 h-4" />
-											{errors.description.message}
+											{errors.jobDescription.message}
 										</p>
 									)}
 								</div>
@@ -432,15 +433,15 @@ export default function PostNewJobPage() {
 										Key Responsibilities *
 									</label>
 									<textarea
-										{...register('responsibilities')}
+										{...register('keyResponsibilities')}
 										rows={4}
-										className={getTextareaClasses(!!errors.responsibilities)}
+										className={getTextareaClasses(!!errors.keyResponsibilities)}
 										placeholder="List the main responsibilities (use bullet points or line breaks)..."
 									/>
-									{errors.responsibilities && (
+									{errors.keyResponsibilities && (
 										<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
 											<AlertCircle className="w-4 h-4" />
-											{errors.responsibilities.message}
+											{errors.keyResponsibilities.message}
 										</p>
 									)}
 								</div>
@@ -450,15 +451,15 @@ export default function PostNewJobPage() {
 										Requirements & Qualifications *
 									</label>
 									<textarea
-										{...register('requirements')}
+										{...register('requirementsQualifications')}
 										rows={4}
-										className={getTextareaClasses(!!errors.requirements)}
+										className={getTextareaClasses(!!errors.requirementsQualifications)}
 										placeholder="List the required skills, experience, and qualifications..."
 									/>
-									{errors.requirements && (
+									{errors.requirementsQualifications && (
 										<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
 											<AlertCircle className="w-4 h-4" />
-											{errors.requirements.message}
+											{errors.requirementsQualifications.message}
 										</p>
 									)}
 								</div>
@@ -468,9 +469,9 @@ export default function PostNewJobPage() {
 										Benefits & Perks
 									</label>
 									<textarea
-										{...register('benefits')}
+										{...register('benefitsPerks')}
 										rows={3}
-										className={getTextareaClasses(!!errors.benefits)}
+										className={getTextareaClasses(!!errors.benefitsPerks)}
 										placeholder="List the benefits, perks, and what makes your company great..."
 									/>
 									<p className="text-white/50 text-xs mt-1">
@@ -500,8 +501,8 @@ export default function PostNewJobPage() {
 												setSkillError('')
 											}}
 											onKeyDown={handleSkillKeyDown}
-											className={getInputClasses(!!skillError || !!errors.skills)}
-											placeholder="e.g. React, TypeScript, Node.js..."
+										className={getInputClasses(!!skillError || !!errors.requiredSkills)}
+										placeholder="e.g. React, TypeScript, Node.js..."
 										/>
 										<button
 											type="button"
@@ -518,10 +519,10 @@ export default function PostNewJobPage() {
 											{skillError}
 										</p>
 									)}
-									{errors.skills && (
+									{errors.requiredSkills && (
 										<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
 											<AlertCircle className="w-4 h-4" />
-											{errors.skills.message}
+											{errors.requiredSkills.message}
 										</p>
 									)}
 									<p className="text-white/50 text-xs mt-1">

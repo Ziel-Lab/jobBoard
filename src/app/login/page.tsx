@@ -59,13 +59,17 @@ function LoginForm() {
         throw new Error('No access token received')
       }
 
-      // Store auth data
+      // Store auth data in localStorage (for client-side API calls)
       setAccessToken(
         accessToken,
         expiresAt,
         userId,
         subdomain
       )
+      
+      // Add small delay to ensure cookie is set by the browser
+      // The login API route sets an HttpOnly cookie that the middleware checks
+      await new Promise(resolve => setTimeout(resolve, 100))
       
       // Handle redirect based on response
       // Check multiple conditions to determine if onboarding is needed

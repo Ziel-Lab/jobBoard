@@ -38,11 +38,12 @@ export class AuthenticatedApiClient {
       const response = await fetch(this.resolveUrl(endpoint), {
         method: 'GET',
         headers: this.buildHeaders('GET'),
-        credentials: 'include'
+        credentials: 'include' // Ensures cookies are sent with request
       })
 
       if (!response.ok) {
         if (response.status === 401) {
+          console.error('[API] 401 Unauthorized on GET', endpoint)
           handleAuthError({ status: response.status } as ApiError)
           return { data: null as T, success: false }
         }
@@ -51,6 +52,7 @@ export class AuthenticatedApiClient {
 
       return response.json()
     } catch (error) {
+      console.error('[API] Error on GET', endpoint, error)
       handleAuthError(error as ApiError)
       return { data: null as T, success: false }
     }
@@ -99,6 +101,58 @@ export class AuthenticatedApiClient {
 
       return response.json()
 	} catch (error) {
+      handleAuthError(error as ApiError)
+      return { data: null as T, success: false }
+    }
+  }
+
+  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+    try {
+      const response = await fetch(this.resolveUrl(endpoint), {
+        method: 'DELETE',
+        headers: this.buildHeaders('DELETE'),
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          handleAuthError({ status: response.status } as ApiError)
+          return { data: null as T, success: false }
+        }
+        throw new Error(`API Error: ${response.statusText}`)
+      }
+
+      // DELETE might return 204 No Content
+      if (response.status === 204) {
+        return { data: null as T, success: true }
+      }
+
+      return response.json()
+    } catch (error) {
+      handleAuthError(error as ApiError)
+      return { data: null as T, success: false }
+    }
+  }
+
+  async patch<T>(endpoint: string, data: Record<string, unknown>): Promise<ApiResponse<T>> {
+    try {
+      const response = await fetch(this.resolveUrl(endpoint), {
+        method: 'PATCH',
+        headers: this.buildHeaders('PATCH'),
+        credentials: 'include',
+        body: JSON.stringify(data)
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          handleAuthError({ status: response.status } as ApiError)
+          return { data: null as T, success: false }
+        }
+        throw new Error(`API Error: ${response.statusText}`)
+      }
+
+      return response.json()
+    } catch (error) {
       handleAuthError(error as ApiError)
       return { data: null as T, success: false }
     }

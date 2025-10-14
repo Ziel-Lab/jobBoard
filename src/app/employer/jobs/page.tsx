@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
@@ -10,32 +10,14 @@ import {
 	Edit,
 	Eye,
 	Trash2,
-	EyeOff,
-	HelpCircle,
 	MapPin,
 	DollarSign,
 	Calendar,
-	Users,
 	Plus
 } from 'lucide-react'
 import { CustomSelect } from '@/components/ui/custom-select'
-
-interface Job {
-	id: string
-	title: string
-	location: string
-	isRemote: boolean
-	employmentType: 'full-time' | 'part-time' | 'contract' | 'internship'
-	experienceLevel: 'entry' | 'mid' | 'senior' | 'lead'
-	salaryMin?: number
-	salaryMax?: number
-	currency: 'USD' | 'EUR' | 'GBP' | 'INR'
-	status: 'published' | 'draft' | 'closed' | 'paused'
-	applicants: number
-	postedAt: string
-	isHiddenOnCareerPage: boolean
-	hasQuestions: boolean
-}
+import { jobsApi } from '@/lib/jobs-api'
+import type { Job, JobsQuery } from '@/types/job'
 
 const statusOptions = [
 	{ value: 'all', label: 'All Status' },
@@ -45,109 +27,18 @@ const statusOptions = [
 	{ value: 'paused', label: 'Paused' },
 ]
 
+const employmentTypeMap: Record<string, string> = {
+	full_time: 'Full-time',
+	part_time: 'Part-time',
+	contract: 'Contract',
+	internship: 'Internship',
+}
+
 export default function ManageJobsPage() {
 	const router = useRouter()
 
-	// Mock jobs data
-	const [jobs, setJobs] = useState<Job[]>([
-		{
-			id: '1',
-			title: 'Senior Frontend Developer',
-			location: 'San Francisco, CA',
-			isRemote: true,
-			employmentType: 'full-time',
-			experienceLevel: 'senior',
-			salaryMin: 120000,
-			salaryMax: 180000,
-			currency: 'USD',
-			status: 'published',
-			applicants: 45,
-			postedAt: '2024-01-15',
-			isHiddenOnCareerPage: false,
-			hasQuestions: true,
-		},
-		{
-			id: '2',
-			title: 'Backend Engineer',
-			location: 'New York, NY',
-			isRemote: false,
-			employmentType: 'full-time',
-			experienceLevel: 'mid',
-			salaryMin: 100000,
-			salaryMax: 150000,
-			currency: 'USD',
-			status: 'published',
-			applicants: 32,
-			postedAt: '2024-01-20',
-			isHiddenOnCareerPage: false,
-			hasQuestions: true,
-		},
-		{
-			id: '3',
-			title: 'Product Designer',
-			location: 'Remote',
-			isRemote: true,
-			employmentType: 'full-time',
-			experienceLevel: 'mid',
-			salaryMin: 90000,
-			salaryMax: 130000,
-			currency: 'USD',
-			status: 'draft',
-			applicants: 0,
-			postedAt: '2024-02-01',
-			isHiddenOnCareerPage: false,
-			hasQuestions: false,
-		},
-		{
-			id: '4',
-			title: 'DevOps Engineer',
-			location: 'Austin, TX',
-			isRemote: true,
-			employmentType: 'full-time',
-			experienceLevel: 'senior',
-			salaryMin: 130000,
-			salaryMax: 170000,
-			currency: 'USD',
-			status: 'paused',
-			applicants: 18,
-			postedAt: '2024-01-10',
-			isHiddenOnCareerPage: true,
-			hasQuestions: true,
-		},
-		{
-			id: '5',
-			title: 'Marketing Manager',
-			location: 'Chicago, IL',
-			isRemote: false,
-			employmentType: 'full-time',
-			experienceLevel: 'lead',
-			salaryMin: 110000,
-			salaryMax: 160000,
-			currency: 'USD',
-			status: 'closed',
-			applicants: 67,
-			postedAt: '2023-12-15',
-			isHiddenOnCareerPage: false,
-			hasQuestions: false,
-		},
-		{
-			id: '6',
-			title: 'Data Analyst',
-			location: 'Boston, MA',
-			isRemote: true,
-			employmentType: 'contract',
-			experienceLevel: 'mid',
-			salaryMin: 80000,
-			salaryMax: 120000,
-			currency: 'USD',
-			status: 'published',
-			applicants: 23,
-			postedAt: '2024-01-25',
-			isHiddenOnCareerPage: false,
-			hasQuestions: true,
-		},
-	])
-
+	const [jobs, setJobs] = useState<Job[]>([])
+	const [isLoading, setIsLoading] = useState(true)
 	const [statusFilter, setStatusFilter] = useState('all')
 	const [searchQuery, setSearchQuery] = useState('')
 	const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -155,14 +46,41 @@ export default function ManageJobsPage() {
 	const [currentPage, setCurrentPage] = useState(1)
 	const jobsPerPage = 24
 
-	// Filter jobs based on status and search
+	// Fetch jobs from backend
+	useEffect(() => {
+		const fetchJobs = async () => {
+			setIsLoading(true)
+			try {
+				const query: JobsQuery = {
+					page: currentPage,
+					pageSize: jobsPerPage,
+					sortBy: 'created_at',
+					sortOrder: 'desc',
+				}
+
+				if (statusFilter && statusFilter !== 'all') {
+					query.jobStatus = statusFilter as Job['jobStatus']
+				}
+
+				const response = await jobsApi.listJobs(query)
+				if (response) {
+					setJobs(response.jobs || [])
+				}
+			} catch (error) {
+				console.error('Error fetching jobs:', error)
+			} finally {
+				setIsLoading(false)
+			}
+		}
+
+		fetchJobs()
+	}, [currentPage, statusFilter])
+
+	// Filter jobs based on search (status is already filtered on backend)
 	const filteredJobs = jobs.filter(job => {
-		const matchesStatus = statusFilter === 'all' || job.status === statusFilter
-		const matchesSearch = searchQuery === '' || 
-			job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			job.location.toLowerCase().includes(searchQuery.toLowerCase())
-		
-		return matchesStatus && matchesSearch
+		if (searchQuery === '') return true
+		return job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			job.officeLocation.toLowerCase().includes(searchQuery.toLowerCase())
 	})
 
 	const handleClearFilters = () => {
@@ -176,23 +94,31 @@ export default function ManageJobsPage() {
 		setShowDeleteModal(true)
 	}
 
-	const confirmDelete = () => {
+	const confirmDelete = async () => {
 		if (jobToDelete) {
-			setJobs(jobs.filter(job => job.id !== jobToDelete))
-			setShowDeleteModal(false)
-			setJobToDelete(null)
+			const success = await jobsApi.deleteJob(jobToDelete)
+			if (success) {
+				setJobs(jobs.filter(job => job.id !== jobToDelete))
+				setShowDeleteModal(false)
+				setJobToDelete(null)
+			} else {
+				alert('Failed to delete job. Please try again.')
+			}
 		}
 	}
 
-	const toggleHideOnCareerPage = (jobId: string) => {
-		setJobs(jobs.map(job => 
-			job.id === jobId 
-				? { ...job, isHiddenOnCareerPage: !job.isHiddenOnCareerPage }
-				: job
-		))
+	const changeJobStatus = async (jobId: string, newStatus: Job['jobStatus']) => {
+		const updatedJob = await jobsApi.changeJobStatus(jobId, { status: newStatus })
+		if (updatedJob) {
+			setJobs(jobs.map(job => 
+				job.id === jobId ? updatedJob : job
+			))
+		} else {
+			alert('Failed to update job status. Please try again.')
+		}
 	}
 
-	const getStatusBadge = (status: Job['status']) => {
+	const getStatusBadge = (status: Job['jobStatus']) => {
 		const styles = {
 			published: 'bg-green-500/20 text-green-300 border-green-500/30',
 			draft: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
@@ -202,14 +128,14 @@ export default function ManageJobsPage() {
 
 		return (
 			<span className={`px-2 py-1 text-xs font-semibold rounded-full border ${styles[status]}`}>
-				{status.charAt(0).toUpperCase() + status.slice(1)}
+				{status?.charAt(0).toUpperCase() + status?.slice(1)}
 			</span>
 		)
 	}
 
 	const getStatsForStatus = (status: string) => {
 		if (status === 'all') return jobs.length
-		return jobs.filter(job => job.status === status).length
+		return jobs.filter(job => job.jobStatus === status).length
 	}
 
 	// Pagination calculations
@@ -385,7 +311,12 @@ export default function ManageJobsPage() {
 				</div>
 
 				{/* Jobs Grid */}
-				{filteredJobs.length > 0 ? (
+				{isLoading ? (
+					<div className="text-center py-16 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
+						<div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4" />
+						<p className="text-white/60">Loading jobs...</p>
+					</div>
+				) : filteredJobs.length > 0 ? (
 					<>
 						<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
 							{paginatedJobs.map((job) => (
@@ -395,24 +326,18 @@ export default function ManageJobsPage() {
 							>
 								{/* Status & Actions Header */}
 								<div className="flex items-start justify-between mb-4">
-									{getStatusBadge(job.status)}
-									{job.isHiddenOnCareerPage && (
-										<span className="px-2 py-1 text-xs font-semibold text-yellow-300 bg-yellow-500/20 rounded-full border border-yellow-500/30 flex items-center gap-1">
-											<EyeOff className="w-3 h-3" />
-											Hidden
-										</span>
-									)}
+									{getStatusBadge(job.jobStatus)}
 								</div>
 
 								{/* Job Title & Location */}
 								<div className="mb-4">
 									<h3 className="text-base sm:text-lg font-semibold text-white mb-2 group-hover:text-indigo-300 transition-colors line-clamp-2">
-										{job.title}
+										{job.jobTitle}
 									</h3>
 									<div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-white/60">
 										<span className="flex items-center gap-1">
 											<MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-											<span className="truncate">{job.location}</span>
+											<span className="truncate">{job.officeLocation}</span>
 										</span>
 										{job.isRemote && (
 											<span className="px-2 py-0.5 text-xs font-semibold text-emerald-300 bg-emerald-500/20 rounded-full border border-emerald-500/30 flex-shrink-0">
@@ -426,7 +351,7 @@ export default function ManageJobsPage() {
 								<div className="space-y-1.5 sm:space-y-2 mb-4 flex-1">
 									<div className="flex items-center justify-between text-xs sm:text-sm">
 										<span className="text-white/60">Type:</span>
-										<span className="text-white capitalize">{job.employmentType.replace('-', ' ')}</span>
+										<span className="text-white">{employmentTypeMap[job.employmentType] || job.employmentType}</span>
 									</div>
 									<div className="flex items-center justify-between text-xs sm:text-sm">
 										<span className="text-white/60">Level:</span>
@@ -437,17 +362,10 @@ export default function ManageJobsPage() {
 										<span className="text-green-400 font-semibold flex items-center gap-1">
 											<DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
 											<span className="truncate">
-												{job.salaryMin && job.salaryMax
-													? `${job.salaryMin.toLocaleString()} - ${job.salaryMax.toLocaleString()}`
+												{job.minSalary && job.maxSalary
+													? `${job.minSalary.toLocaleString()} - ${job.maxSalary.toLocaleString()}`
 													: 'Not disclosed'}
 											</span>
-										</span>
-									</div>
-									<div className="flex items-center justify-between text-xs sm:text-sm">
-										<span className="text-white/60">Applicants:</span>
-										<span className="text-white font-semibold flex items-center gap-1">
-											<Users className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-											{job.applicants}
 										</span>
 									</div>
 									<div className="flex items-center justify-between text-xs sm:text-sm">
@@ -455,10 +373,10 @@ export default function ManageJobsPage() {
 										<span className="text-white/80 flex items-center gap-1">
 											<Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
 											<span className="hidden xs:inline">
-												{new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+												{new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
 											</span>
 											<span className="xs:hidden">
-												{new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+												{new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
 											</span>
 										</span>
 									</div>
@@ -483,31 +401,39 @@ export default function ManageJobsPage() {
 										</Link>
 									</div>
 
-									<div className={`grid ${job.hasQuestions ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
-										<button
-											onClick={() => toggleHideOnCareerPage(job.id)}
-											className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1"
-										>
-											{job.isHiddenOnCareerPage ? (
-												<>
-													<Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-													<span className="hidden xs:inline">Show</span>
-												</>
-											) : (
-												<>
-													<EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-													<span className="hidden xs:inline">Hide</span>
-												</>
-											)}
-										</button>
-										{job.hasQuestions && (
-											<Link
-												href={`/employer/jobs/${job.id}/questions`}
-												className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1"
+									<div className="grid grid-cols-1 gap-2">
+										{/* Status change buttons */}
+										{job.jobStatus === 'draft' && (
+											<button
+												onClick={() => changeJobStatus(job.id, 'published')}
+												className="px-3 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 rounded-lg transition-colors text-xs sm:text-sm font-medium"
 											>
-												<HelpCircle className="w-4 h-4" />
-												Questions
-											</Link>
+												Publish
+											</button>
+										)}
+										{job.jobStatus === 'published' && (
+											<button
+												onClick={() => changeJobStatus(job.id, 'paused')}
+												className="px-3 py-2 bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 border border-orange-600/30 rounded-lg transition-colors text-xs sm:text-sm font-medium"
+											>
+												Pause
+											</button>
+										)}
+										{job.jobStatus === 'paused' && (
+											<button
+												onClick={() => changeJobStatus(job.id, 'published')}
+												className="px-3 py-2 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-600/30 rounded-lg transition-colors text-xs sm:text-sm font-medium"
+											>
+												Resume
+											</button>
+										)}
+										{(job.jobStatus === 'published' || job.jobStatus === 'paused') && (
+											<button
+												onClick={() => changeJobStatus(job.id, 'closed')}
+												className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg transition-colors text-xs sm:text-sm font-medium"
+											>
+												Close
+											</button>
 										)}
 									</div>
 

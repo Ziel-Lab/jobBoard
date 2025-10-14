@@ -87,18 +87,14 @@ async function proxyRequest(
 	}
 }
 
-export async function GET(req: NextRequest) {
-	const { searchParams } = new URL(req.url)
-	const queryString = searchParams.toString()
-	const endpoint = `/jobs${queryString ? `?${queryString}` : ''}`
-	
-	return proxyRequest(req, endpoint, 'GET')
-}
-
-export async function POST(req: NextRequest) {
+export async function PATCH(
+	req: NextRequest,
+	{ params }: { params: { jobId: string } }
+) {
 	try {
 		const body = await req.json()
-		return proxyRequest(req, '/jobs', 'POST', body)
+		const jobId = params.jobId
+		return proxyRequest(req, `/jobs/${jobId}/status`, 'PATCH', body)
 	} catch (error) {
 		console.error('[Jobs API] Error parsing request body:', error)
 		return NextResponse.json(
@@ -107,3 +103,4 @@ export async function POST(req: NextRequest) {
 		)
 	}
 }
+

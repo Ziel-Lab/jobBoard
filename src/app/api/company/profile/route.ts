@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAccessTokenFromRequest, unauthorizedResponse } from '@/lib/api-auth-helpers'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
 
 // GET company profile
 export async function GET(request: NextRequest) {
