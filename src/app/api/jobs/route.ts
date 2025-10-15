@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAccessTokenFromRequest, unauthorizedResponse } from '@/lib/api-auth-helpers'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
 
@@ -32,16 +33,16 @@ async function proxyRequest(
 	body?: unknown
 ) {
 	try {
-		// Get headers from the incoming request instead of client-side storage
+		// Build headers and attach server-side token from HttpOnly cookie
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json'
 		}
-		
-		// Forward the Authorization header from the client request
-		const authHeader = req.headers.get('Authorization')
-		if (authHeader) {
-			headers['Authorization'] = authHeader
+		// Read token via helper (cookies or Authorization fallback)
+		const accessToken = await getAccessTokenFromRequest(req)
+		if (!accessToken) {
+			return NextResponse.json(unauthorizedResponse(), { status: 401 })
 		}
+		headers['Authorization'] = `Bearer ${accessToken}`
 		
 		const subdomain = getSubdomainFromRequest(req)
 		if (subdomain) {

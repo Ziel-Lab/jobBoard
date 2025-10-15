@@ -180,13 +180,8 @@ function CompanyOnboardingPage() {
 			const teamData = teamForm.getValues()
 			const preferencesData = preferencesForm.getValues()
 
-			// Get access token from localStorage (use snake_case to match auth-utils.ts)
-			const accessToken = localStorage.getItem('access_token')
-			console.log('Access Token:', accessToken ? 'Found' : 'Not found')
-			
-			if (!accessToken) {
-				throw new Error('No access token found. Please log in again.')
-			}
+			// Do not read tokens from localStorage. Use the same-origin proxy which sends
+			// the HttpOnly access cookie with credentials: 'include'.
 
 			// Format data according to backend API requirements
 			const requestBody = {
@@ -214,16 +209,12 @@ function CompanyOnboardingPage() {
 				},
 			}
 
-			const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
-			console.log('API URL:', apiUrl)
-			console.log('Request Body:', requestBody)
-			
-			const response = await fetch(`${apiUrl}/company/onboarding`, {
+			const response = await fetch('/api/company/onboarding', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${accessToken}`,
 				},
+				credentials: 'include',
 				body: JSON.stringify(requestBody),
 			})
 

@@ -6,10 +6,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api
 // GET company profile
 export async function GET(request: NextRequest) {
 	try {
+		// Log cookies for debugging
+		console.log('[Company Profile API] Cookies received:', request.cookies.getAll().map(c => `${c.name}=${c.value}`).join('; '))
+
 		// Get auth token from cookies or header
 		const accessToken = await getAccessTokenFromRequest(request)
 
 		if (!accessToken) {
+			console.warn('[Company Profile API] No access token found in request cookies or headers')
 			return NextResponse.json(unauthorizedResponse(), { status: 401 })
 		}
 
@@ -24,6 +28,7 @@ export async function GET(request: NextRequest) {
 
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => ({}))
+			console.error('[Company Profile API] Backend error:', errorData.message || 'Unknown error')
 			return NextResponse.json(
 				{
 					success: false,
@@ -34,9 +39,10 @@ export async function GET(request: NextRequest) {
 		}
 
 		const data = await response.json()
+		console.log('[Company Profile API] Successfully fetched company profile')
 		return NextResponse.json({ success: true, data })
 	} catch (error) {
-		console.error('Error fetching company profile:', error)
+		console.error('[Company Profile API] Error fetching company profile:', error)
 		return NextResponse.json(
 			{ success: false, message: 'Internal server error' },
 			{ status: 500 }
@@ -47,10 +53,14 @@ export async function GET(request: NextRequest) {
 // PUT update company profile
 export async function PUT(request: NextRequest) {
 	try {
+		// Log cookies for debugging
+		console.log('[Company Profile API] Cookies received:', request.cookies.getAll().map(c => `${c.name}=${c.value}`).join('; '))
+
 		// Get auth token from cookies or header
 		const accessToken = await getAccessTokenFromRequest(request)
 
 		if (!accessToken) {
+			console.warn('[Company Profile API] No access token found in request cookies or headers')
 			return NextResponse.json(unauthorizedResponse(), { status: 401 })
 		}
 
@@ -69,6 +79,7 @@ export async function PUT(request: NextRequest) {
 
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => ({}))
+			console.error('[Company Profile API] Backend error:', errorData.message || 'Unknown error')
 			return NextResponse.json(
 				{
 					success: false,
@@ -79,9 +90,10 @@ export async function PUT(request: NextRequest) {
 		}
 
 		const data = await response.json()
+		console.log('[Company Profile API] Successfully updated company profile')
 		return NextResponse.json({ success: true, data })
 	} catch (error) {
-		console.error('Error updating company profile:', error)
+		console.error('[Company Profile API] Error updating company profile:', error)
 		return NextResponse.json(
 			{ success: false, message: 'Internal server error' },
 			{ status: 500 }

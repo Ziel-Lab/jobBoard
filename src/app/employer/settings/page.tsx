@@ -24,7 +24,6 @@ import {
 } from 'lucide-react'
 import { CustomSelect } from '@/components/ui/custom-select'
 import Image from 'next/image'
-import { withAuth } from '@/components/hoc/withAuth'
 import { api } from '@/lib/authenticated-api'
 
 // Validation schema for company settings
@@ -1086,4 +1085,4 @@ function CompanySettingsPage() {
 	)
 }
 
-export default withAuth(CompanySettingsPage)
+export default CompanySettingsPage

@@ -7,38 +7,59 @@ interface TokenData {
   subdomain?: string
 }
 
-export function setAccessToken(token: string, expiresAt?: number, userId?: string, subdomain?: string) {
+export function setAccessToken(token?: string, expiresAt?: number, userId?: string, subdomain?: string) {
+  // Avoid storing access tokens in localStorage (security risk).
+  // Keep a minimal client-side metadata record (non-sensitive) to aid UI routing.
   if (typeof window === 'undefined') return
 
-  // Store token
-  localStorage.setItem('access_token', token)
-  
-  // Store expiration if provided
+  // Only store non-sensitive metadata. Do NOT persist the access token.
   if (expiresAt) {
-    localStorage.setItem('expires_at', expiresAt.toString())
+    try {
+      localStorage.setItem('expires_at', expiresAt.toString())
+    } catch {
+      // ignore localStorage failures
+    }
   }
-  
-  // Store user ID if provided
+
   if (userId) {
-    localStorage.setItem('user_id', userId)
+    try {
+      localStorage.setItem('user_id', userId)
+    } catch {}
   }
-  
-  // Store subdomain if provided
+
   if (subdomain) {
-    localStorage.setItem('subdomain', subdomain)
+    try {
+      localStorage.setItem('subdomain', subdomain)
+    } catch {}
   }
 }
 
 export function getAuthHeaders(): AuthHeaders {
   const headers: AuthHeaders = { 'Content-Type': 'application/json' }
 
-  // Only access localStorage on client side
+  // We rely on HttpOnly cookies being sent with requests (credentials: 'include').
+  // Do NOT attach Authorization header by default since tokens aren't stored client-side.
+  // If callers have an explicit token (e.g., from a magic link flow) they should
+  // use `attachAuthHeader` helper below to add Authorization.
+
+  // Include known non-sensitive metadata (subdomain) when available for routing
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token') || ''
-    if (token) headers['Authorization'] = `Bearer ${token}`
+    try {
+      const sub = localStorage.getItem('subdomain')
+      if (sub) headers['X-Company-Subdomain'] = sub
+    } catch {}
   }
 
   return headers
+}
+
+// Helper to attach Authorization header when the caller explicitly provides a token.
+export function attachAuthHeader(headers: AuthHeaders, token?: string) {
+  if (!token) return headers
+  return {
+    ...headers,
+    Authorization: `Bearer ${token}`,
+  }
 }
 
 export function isTokenExpired(): boolean {
@@ -52,11 +73,13 @@ export function isTokenExpired(): boolean {
 
 export function clearAuth() {
   if (typeof window === 'undefined') return
-  
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('expires_at')
-  localStorage.removeItem('user_id')
-  localStorage.removeItem('subdomain')
+  // Remove only client-side metadata
+  try {
+    localStorage.removeItem('expires_at')
+    localStorage.removeItem('user_id')
+    localStorage.removeItem('subdomain')
+    // Do not attempt to remove HttpOnly access cookie here — server must clear it.
+  } catch {}
 }
 
 export interface ApiError extends Error {
@@ -81,13 +104,15 @@ export function handleAuthError(error: ApiError) {
 export function getAuthData(): TokenData | null {
   if (typeof window === 'undefined') return null
 
-  const access_token = localStorage.getItem('access_token')
-  if (!access_token) return null
+  // Access token is intentionally not stored client-side. Return available metadata.
+  const user_id = localStorage.getItem('user_id') || undefined
+  const subdomain = localStorage.getItem('subdomain') || undefined
+  const expires_at_raw = localStorage.getItem('expires_at') || '0'
 
   return {
-    access_token,
-    expires_at: parseInt(localStorage.getItem('expires_at') || '0'),
-    user_id: localStorage.getItem('user_id') || undefined,
-    subdomain: localStorage.getItem('subdomain') || undefined
+    access_token: '',
+    expires_at: parseInt(expires_at_raw),
+    user_id,
+    subdomain,
   }
 }

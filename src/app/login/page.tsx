@@ -59,13 +59,9 @@ function LoginForm() {
         throw new Error('No access token received')
       }
 
-      // Store auth data in localStorage (for client-side API calls)
-      setAccessToken(
-        accessToken,
-        expiresAt,
-        userId,
-        subdomain
-      )
+      // Do NOT store access tokens in localStorage. Server sets an HttpOnly cookie.
+      // Persist only non-sensitive client metadata (expires_at, user_id, subdomain).
+      setAccessToken(undefined, expiresAt, userId, subdomain)
       
       // Add small delay to ensure cookie is set by the browser
       // The login API route sets an HttpOnly cookie that the middleware checks

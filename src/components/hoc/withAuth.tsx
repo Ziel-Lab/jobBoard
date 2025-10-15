@@ -12,10 +12,8 @@ export function withAuth<P extends object>(
     useEffect(() => {
       // Check if we're on client side
       if (typeof window === 'undefined') return
-
-      const token = localStorage.getItem('access_token')
-      
-      if (!token || isTokenExpired()) {
+      // Rely on expires_at metadata (stored client-side) and HttpOnly cookie.
+      if (isTokenExpired()) {
         router.push('/login')
         return
       }

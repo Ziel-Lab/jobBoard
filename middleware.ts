@@ -36,64 +36,64 @@ function getSubdomainFromRequest(request: NextRequest): string | null {
 }
 
 export function middleware(request: NextRequest) {
-	const { pathname } = request.nextUrl
-	
+	const { pathname } = request.nextUrl;
+
 	// Check if the current route is protected
 	const isProtectedRoute = protectedRoutes.some((route) => 
 		pathname.startsWith(route)
-	)
-	
+	);
+
 	if (isProtectedRoute) {
 		// Check for access token in cookies
-		const accessToken = request.cookies.get('accessToken')?.value
-		
+		const accessToken = request.cookies.get('accessToken')?.value;
+
 		if (!accessToken) {
 			// Debug: Log all cookies for troubleshooting
-			console.log('[Middleware] No accessToken found for protected route:', pathname)
-			console.log('[Middleware] Available cookies:', request.cookies.getAll().map(c => c.name).join(', '))
-			
+			console.log('[Middleware] No accessToken found for protected route:', pathname);
+			console.log('[Middleware] Available cookies:', request.cookies.getAll().map(c => c.name).join(', '));
+
 			// No token found, redirect to login on main domain
-			const subdomain = getSubdomainFromRequest(request)
-			
+			const subdomain = getSubdomainFromRequest(request);
+
 			// If on subdomain, redirect to main domain for login
 			if (subdomain) {
 				// Build main domain URL
-				const protocol = request.nextUrl.protocol
-				const port = request.nextUrl.port
+				const protocol = request.nextUrl.protocol;
+				const port = request.nextUrl.port;
 				const mainDomain = request.nextUrl.hostname.includes('localhost')
 					? 'localhost'
-					: request.nextUrl.hostname.split('.').slice(-2).join('.')
-				
+					: request.nextUrl.hostname.split('.').slice(-2).join('.');
+
 				const loginUrl = new URL(
 					`${protocol}//${mainDomain}${port ? `:${port}` : ''}/login`
-				)
-				loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
-				
-				console.log('[Middleware] Redirecting to login from subdomain:', loginUrl.toString())
-				return NextResponse.redirect(loginUrl)
+				);
+				loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+
+				console.log('[Middleware] Redirecting to login from subdomain:', loginUrl.toString());
+				return NextResponse.redirect(loginUrl);
 			}
-			
+
 			// Already on main domain, redirect to login
-			const loginUrl = new URL('/login', request.url)
-			loginUrl.searchParams.set('redirect', pathname)
-			console.log('[Middleware] Redirecting to login:', loginUrl.toString())
-			return NextResponse.redirect(loginUrl)
+			const loginUrl = new URL('/login', request.url);
+			loginUrl.searchParams.set('redirect', pathname);
+			console.log('[Middleware] Redirecting to login:', loginUrl.toString());
+			return NextResponse.redirect(loginUrl);
 		}
-		
+
 		// User is authenticated
-		console.log('[Middleware] Access granted to protected route:', pathname)
-		
+		console.log('[Middleware] Access granted to protected route:', pathname);
+
 		// Add subdomain to response headers for debugging
-		const response = NextResponse.next()
-		const subdomain = getSubdomainFromRequest(request)
+		const response = NextResponse.next();
+		const subdomain = getSubdomainFromRequest(request);
 		if (subdomain) {
-			response.headers.set('X-Current-Subdomain', subdomain)
+			response.headers.set('X-Current-Subdomain', subdomain);
 		}
-		
-		return response
+
+		return response;
 	}
-	
-	return NextResponse.next()
+
+	return NextResponse.next();
 }
 
 // Configure which routes the middleware runs on
