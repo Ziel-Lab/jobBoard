@@ -7,7 +7,6 @@ import { z } from 'zod'
 import { ChevronLeft, ChevronRight, Building2, Users, Settings, CheckCircle } from 'lucide-react'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { buildSubdomainUrl } from '@/lib/subdomain-utils'
-import { withAuth } from '@/components/hoc/withAuth'
 
 // Validation schemas for each step
 const companyDetailsSchema = z.object({
@@ -729,4 +728,4 @@ function CompanyOnboardingPage() {
 	)
 }
 
-export default withAuth(CompanyOnboardingPage)
+export default CompanyOnboardingPage
