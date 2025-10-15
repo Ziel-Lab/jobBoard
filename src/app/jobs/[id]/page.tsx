@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { headers } from 'next/headers'
 import type { Job } from '@/types/job'
+import { IoGlobeOutline } from "react-icons/io5"
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,9 @@ interface CompanyInfo {
 	name?: string
 	logoUrl?: string
 	branding: CompanyBranding
+	company_description?: string
+	companyDescription?: string
+	websiteUrl?: string
 }
 
 type PublicJob = Omit<Job, 'company'> & {
@@ -73,6 +77,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
     const company: CompanyInfo | undefined = jobData.company
 	const primaryColor = company?.branding?.primaryColor || '#0b1220'
 	const logoUrl = company?.logoUrl || '/vercel.svg'
+	const companyDescription = company?.companyDescription || company?.company_description
 
 	// Ensure job description renders even when only plain text is provided
     const rawDescription = jobData.jobDescriptionHtml || jobData.jobDescription || jobData.job_description || ''
@@ -112,9 +117,9 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 	}
 
 	return (
-		<main className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+		<main className="min-h-screen relative overflow-hidden bg-black">
 			{/* Dark Theme Background */}
-			<div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" />
+			{/* <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-700 to-gray-800" /> */}
 			
 			{/* Subtle Pattern Overlay */}
 			<div className="absolute inset-0 opacity-20">
@@ -123,42 +128,57 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 				<div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-radial from-white/3 to-transparent rounded-full blur-3xl" />
 			</div>
 
-			<section className="relative z-10 mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-8 sm:pt-16 pb-16 text-white">
+			<section className="relative z-10 mx-auto w-full max-w-6xl px-3 sm:px-6 lg:px-8 pt-4 sm:pt-16 pb-16 text-white">
 				{/* Modern Header Section */}
-				<header className="mb-8 sm:mb-12">
-					<div className="relative overflow-hidden rounded-3xl border border-white/10 backdrop-blur-md bg-white/5">
+				<header className="mb-4 sm:mb-12 transform hover:scale-[1.01] transition-transform duration-300">
+					<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-md bg-white/5 shadow-xl hover:shadow-2xl transition-shadow duration-300">
 						{/* Header gradient overlay */}
 						<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
 						
-						<div className="relative p-6 sm:p-8">
+						<div className="relative p-4 sm:p-8">
 							<div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-								{/* Company Logo */}
-								<div className="relative">
-									<div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center overflow-hidden">
-										<Image 
-											src={logoUrl} 
-											alt={company?.companyName || 'Company Logo'} 
-											width={80} 
-											height={80} 
-											className="w-full h-full object-contain p-2" 
-										/>
+								{/* Company Logo and Job Info for Mobile */}
+								<div className="w-full sm:w-auto flex flex-row gap-4 sm:block">
+									<div className="relative shrink-0">
+										<div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center overflow-hidden">
+											<Image 
+												src={logoUrl} 
+												alt={company?.companyName || 'Company Logo'} 
+												width={80} 
+												height={80} 
+												className="w-full h-full object-contain p-2 transition-transform duration-300 hover:scale-110" 
+											/>
+										</div>
+										<div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse" />
 									</div>
-									<div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white shadow-md" />
+
 								</div>
 
 								{/* Job Info */}
-								<div className="flex-1 min-w-0">
-									<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 leading-tight">
+								<div className="flex-1 min-w-0 mt-4 sm:mt-0">
+									<h1 className="text-xl sm:text-3xl lg:text-4xl font-bold mb-2 leading-tight">
 										{job?.jobTitle || job?.job_title}
 									</h1>
-									<p className="text-lg text-white/70 mb-4">
-										{company?.companyName || company?.name}
-									</p>
+									{company?.websiteUrl ? (
+										<a 
+											href={company.websiteUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="inline-flex items-center gap-2 text-base sm:text-lg text-white/70 hover:text-white transition-colors duration-200 group mb-4"
+										>
+											<span>{company?.companyName || company?.name}</span>
+											<IoGlobeOutline className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+										</a>
+									) : (
+										<p className="text-base sm:text-lg text-white/70 mb-4">
+											{company?.companyName || company?.name}
+										</p>
+									)}
 									
 									{/* Tags with Brand Colors */}
-									<div className="flex flex-wrap gap-2">
+									<div className="flex flex-wrap gap-1.5 sm:gap-2">
 										<span 
-											className="px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm border"
+											className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm border"
 											style={{ 
 												backgroundColor: `${primaryColor}20`,
 												borderColor: `${primaryColor}50`,
@@ -201,12 +221,15 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 									</div>
 								</div>
 
-								{/* Apply Button - Desktop */}
-								{job?.applicationUrl && (
-									<div className="hidden sm:block">
-										<a 
-											href={job.applicationUrl}
-											className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-white"
+
+
+							{/* Apply Button - Desktop */}
+								<div className="hidden sm:block">
+									<a 
+										href={job?.applicationUrl || '#'}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-white"
 											style={{
 												background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`
 											}}
@@ -217,7 +240,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 											</svg>
 										</a>
 									</div>
-								)}
+								
 							</div>
 						</div>
 					</div>
@@ -226,13 +249,35 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 				{/* Main Content Grid */}
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					{/* Main Content */}
-					<article className="lg:col-span-2 space-y-8">
+					<article className="lg:col-span-2 space-y-4 sm:space-y-8">
+						{/* Company Description */}
+						{companyDescription && (
+							<section className="rounded-2xl sm:rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden transform hover:scale-[1.01] transition-all duration-300 hover:shadow-xl">
+								<div className="p-4 sm:p-8">
+									<div className="flex items-center gap-3 mb-6">
+										<div 
+											className="w-10 h-10 rounded-2xl flex items-center justify-center transform hover:rotate-12 transition-transform duration-300"
+											style={{ backgroundColor: `${primaryColor}20` }}
+										>
+											<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+											</svg>
+										</div>
+										<h2 className="text-xl sm:text-2xl font-bold">About {company.companyName}</h2>
+									</div>
+									<div className="prose prose-lg prose-invert max-w-none">
+										<p className="text-white/80">{companyDescription}</p>
+									</div>
+								</div>
+							</section>
+						)}
+
 						{/* Job Description */}
-						<section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
+						<section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden transform hover:scale-[1.01] transition-all duration-300 hover:shadow-xl">
 							<div className="p-6 sm:p-8">
 								<div className="flex items-center gap-3 mb-6">
 									<div 
-										className="w-10 h-10 rounded-2xl flex items-center justify-center"
+										className="w-10 h-10 rounded-2xl flex items-center justify-center transform hover:rotate-12 transition-transform duration-300"
 										style={{ backgroundColor: `${primaryColor}20` }}
 									>
 										<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
@@ -246,6 +291,40 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 								</div>
 							</div>
 						</section>
+						
+						{/* Required Skills */}
+						{Array.isArray(job?.requiredSkills) && job.requiredSkills.length > 0 && (
+							<section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
+								<div className="p-6 sm:p-8">
+									<div className="flex items-center gap-3 mb-6">
+										<div 
+											className="w-10 h-10 rounded-2xl flex items-center justify-center"
+											style={{ backgroundColor: `${primaryColor}20` }}
+										>
+											<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+											</svg>
+										</div>
+										<h2 className="text-xl sm:text-2xl font-bold">Required Skills</h2>
+									</div>
+									<div className="flex flex-wrap gap-3">
+										{job.requiredSkills.map((skill: string) => (
+											<span 
+												key={skill} 
+												className="px-4 py-2 rounded-2xl text-sm font-medium backdrop-blur-sm border hover:scale-105 transition-transform duration-200"
+												style={{ 
+													backgroundColor: `${primaryColor}15`,
+													borderColor: `${primaryColor}30`,
+													color: primaryColor
+												}}
+											>
+												{skill}
+											</span>
+										))}
+									</div>
+								</div>
+							</section>
+						)}
 
 						{/* Key Responsibilities */}
 						{keyResponsibilitiesHtml && (
@@ -313,45 +392,13 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 							</section>
 						)}
 
-						{/* Required Skills */}
-						{Array.isArray(job?.requiredSkills) && job.requiredSkills.length > 0 && (
-							<section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
-								<div className="p-6 sm:p-8">
-									<div className="flex items-center gap-3 mb-6">
-										<div 
-											className="w-10 h-10 rounded-2xl flex items-center justify-center"
-											style={{ backgroundColor: `${primaryColor}20` }}
-										>
-											<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-											</svg>
-										</div>
-										<h2 className="text-xl sm:text-2xl font-bold">Required Skills</h2>
-									</div>
-									<div className="flex flex-wrap gap-3">
-										{job.requiredSkills.map((skill: string) => (
-											<span 
-												key={skill} 
-												className="px-4 py-2 rounded-2xl text-sm font-medium backdrop-blur-sm border hover:scale-105 transition-transform duration-200"
-												style={{ 
-													backgroundColor: `${primaryColor}15`,
-													borderColor: `${primaryColor}30`,
-													color: primaryColor
-												}}
-											>
-												{skill}
-											</span>
-										))}
-									</div>
-								</div>
-							</section>
-						)}
+						
 					</article>
 
 					{/* Sidebar */}
-					<aside className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden h-fit sticky top-8">
-						<div className="p-6 sm:p-8 space-y-6">
-							<h3 className="text-xl font-bold mb-6">Job Details</h3>
+					<aside className="rounded-2xl sm:rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden h-fit sticky top-4 sm:top-8">
+						<div className="p-4 sm:p-8 space-y-4 sm:space-y-6">
+							<h3 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Job Details</h3>
 							
 							{/* Job Details */}
 							<div className="space-y-5">
@@ -456,7 +503,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 								<div className="pt-6 border-t border-white/20">
 									<a 
 										href={job.applicationUrl}
-										className="flex items-center justify-center gap-3 w-full px-6 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl text-white"
+										className="flex items-center justify-center gap-2 w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl text-white"
 										style={{
 											background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`
 										}}
