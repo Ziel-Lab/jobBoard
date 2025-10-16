@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { headers } from 'next/headers'
 import type { Job } from '@/types/job'
 import { IoGlobeOutline } from "react-icons/io5"
+import ApplyButton from '@/components/jobs/apply-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,7 +50,7 @@ async function fetchPublicJob (jobId: string, origin: string)
 	} catch {}
 	const qp = subdomain ? `?subdomain=${encodeURIComponent(subdomain)}` : ''
 	const url = `${origin}/api/jobs/public/${jobId}${qp}`
-	const res = await fetch(url, { next: { revalidate: 60 } })
+	const res = await fetch(url, { next: { revalidate: 30 } })
 	if (!res.ok) {
 		console.log('Failed to load job', res.statusText)
 		return { success: false, data: null }
@@ -209,7 +210,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										>
 											{job?.isRemote ? '🌍 Remote' : '🏢 On-site'}
 										</span>
-										{typeof job?.acceptingApplications === 'boolean' && (
+										{/* {typeof job?.acceptingApplications === 'boolean' && (
 											<span className={`px-3 py-1.5 rounded-full text-sm font-medium ${
 												job.acceptingApplications 
 													? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
@@ -217,30 +218,21 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 											}`}>
 												{job.acceptingApplications ? '✅ Open' : '❌ Closed'}
 											</span>
-										)}
+										)} */}
 									</div>
 								</div>
 
 
 
 							{/* Apply Button - Desktop */}
-								<div className="hidden sm:block">
-									<a 
-										href={job?.applicationUrl || '#'}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-white"
-											style={{
-												background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`
-											}}
-										>
-											<span>Apply Now</span>
-											<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-											</svg>
-										</a>
-									</div>
-								
+								{/* <div className="hidden sm:block">
+									<ApplyButton
+										jobId={job?.id || ''}
+										jobTitle={job?.jobTitle || job?.job_title || ''}
+										companyName={company?.companyName || company?.name}
+										primaryColor={primaryColor}
+									/>
+								</div> */}
 							</div>
 						</div>
 					</div>
@@ -499,22 +491,15 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 							</div>
 
 							{/* Apply Button - Mobile/Tablet */}
-							{job?.applicationUrl && (
-								<div className="pt-6 border-t border-white/20">
-									<a 
-										href={job.applicationUrl}
-										className="flex items-center justify-center gap-2 w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl text-white"
-										style={{
-											background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`
-										}}
-									>
-										<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-										</svg>
-										Apply Now
-									</a>
-								</div>
-							)}
+							<div className="pt-6 border-t border-white/20">
+								<ApplyButton
+									jobId={job?.id || ''}
+									jobTitle={job?.jobTitle || job?.job_title || ''}
+									companyName={company?.companyName || company?.name}
+									primaryColor={primaryColor}
+									className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg"
+								/>
+							</div>
 
 							{/* Job Meta Info */}
 							<div className="pt-4 text-sm text-white/50 space-y-2 border-t border-white/20">

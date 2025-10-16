@@ -385,13 +385,30 @@ export default function ManageJobsPage() {
 								{/* Actions */}
 								<div className="pt-4 border-t border-white/10 space-y-2">
 									<div className="grid grid-cols-2 gap-2">
-										<Link
-											href={`/jobs/${job.id}`}
-											className="px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-600/30 rounded-lg transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1"
-										>
-											<Eye className="w-4 h-4" />
-											View
-										</Link>
+										{job.jobStatus !== 'draft' ? (
+											<Link
+												href={`/jobs/${job.id}`}
+												target='_blank'
+												className={`px-3 py-2 flex items-center justify-center gap-1 rounded-lg transition-colors text-xs sm:text-sm font-medium ${
+													job.jobStatus === 'paused'
+														? 'bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 border border-orange-600/30'
+														: job.jobStatus === 'closed'
+														? 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30'
+														: 'bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-600/30'
+												}`}
+											>
+												<Eye className="w-4 h-4" />
+												View {job.jobStatus === 'paused' ? '(Paused)' : job.jobStatus === 'closed' ? '(Closed)' : ''}
+											</Link>
+										) : (
+											<button
+												disabled
+												className="px-3 py-2 bg-gray-600/20 text-gray-400 border border-gray-600/30 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center gap-1 cursor-not-allowed opacity-50"
+											>
+												<Eye className="w-4 h-4" />
+												Draft
+											</button>
+										)}
 										<Link
 											href={`/employer/jobs/${job.id}/edit`}
 											className="px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-600/30 rounded-lg transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1"
