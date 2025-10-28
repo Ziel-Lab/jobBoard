@@ -246,7 +246,7 @@ function CompanyOnboardingPage() {
 			// Redirect to company subdomain employer dashboard after 2 seconds
 			setTimeout(() => {
 				if (subdomain) {
-					// Redirect to company subdomain (e.g., http://company-xyz.localhost:3000/employer)
+				
 					const subdomainUrl = buildSubdomainUrl('/employer', subdomain)
 					console.log('Redirecting to subdomain:', subdomainUrl)
 					window.location.href = subdomainUrl
