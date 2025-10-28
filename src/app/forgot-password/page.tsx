@@ -2,14 +2,12 @@
 
 import { useState } from 'react'
 import { authForgotPassword } from '@/lib/api'
-import { useRouter } from 'next/navigation'
 
 export default function ForgotPasswordPage() {
 	const [email, setEmail] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [success, setSuccess] = useState(false)
-	const router = useRouter()
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault()

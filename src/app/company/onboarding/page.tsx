@@ -183,27 +183,29 @@ function CompanyOnboardingPage() {
 			// Do not read tokens from localStorage. Use the same-origin proxy which sends
 			// the HttpOnly access cookie with credentials: 'include'.
 
-			// Format data according to backend API requirements
+			// Format data according to API route expectations
 			const requestBody = {
-				company: {
-					company_name: companyData.companyName,
+				companyData: {
+					companyName: companyData.companyName,
 					industry: companyData.industry,
-					company_size: companyData.size,
+					size: companyData.size,
 					location: companyData.location,
-					website_url: companyData.website || '',
-					company_description: companyData.description,
+					website: companyData.website || '',
+					description: companyData.description,
 				},
-				team: (teamData.teamMembers || []).map(member => ({
-					email: member.email,
-					role: member.role,
-					department: member.department,
-				})),
-				settings: {
+				teamData: {
+					teamMembers: (teamData.teamMembers || []).map(member => ({
+						email: member.email,
+						role: member.role,
+						department: member.department,
+					})),
+				},
+				preferencesData: {
 					timezone: preferencesData.timezone,
 					jobPostingFrequency: preferencesData.jobPostingFrequency,
-					notifications: {
-						email: preferencesData.notificationPreferences.emailNotifications,
-						sms: preferencesData.notificationPreferences.smsNotifications,
+					notificationPreferences: {
+						emailNotifications: preferencesData.notificationPreferences.emailNotifications,
+						smsNotifications: preferencesData.notificationPreferences.smsNotifications,
 						marketingEmails: preferencesData.notificationPreferences.marketingEmails,
 					},
 				},

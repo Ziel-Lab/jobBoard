@@ -22,7 +22,11 @@ export default function EditJobForm({ id }: EditJobFormProps) {
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const jobData = await jobsApi.getJob(id)
+        const { job: jobData, error } = await jobsApi.getJob(id)
+        if (error) {
+          setError(error.message)
+          return
+        }
         if (jobData) {
           setJob(jobData)
           setFormData({
@@ -59,7 +63,11 @@ export default function EditJobForm({ id }: EditJobFormProps) {
     setError('')
 
     try {
-      const updatedJob = await jobsApi.updateJob(id, formData)
+      const { job: updatedJob, error } = await jobsApi.updateJob(id, formData)
+      if (error) {
+        setError(error.message)
+        return
+      }
       if (updatedJob) {
         router.push('/employer/jobs')
         router.refresh()

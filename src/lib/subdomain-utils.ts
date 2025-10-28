@@ -1,27 +1,103 @@
-'use client'
+import { NextRequest } from 'next/server'
 
 /**
- * Subdomain Utility Functions
- * Handles extraction and validation of company subdomains
+ * Consistent subdomain detection utility used across middleware and API routes
+ * This ensures the same logic is used everywhere
  */
+export function getSubdomainFromRequest(request: NextRequest): string | null {
+	const hostname = request.nextUrl.hostname.toLowerCase()
+	
+	console.log('[Subdomain Utils] Detecting subdomain for hostname:', hostname)
+	
+	// Handle localhost development
+	if (hostname === 'localhost' || hostname === '127.0.0.1') {
+		console.log('[Subdomain Utils] Plain localhost/IP detected, no subdomain')
+		return null
+	}
+	
+	// Handle *.localhost (e.g., company.localhost)
+	if (hostname.endsWith('.localhost')) {
+		const subdomain = hostname.replace('.localhost', '')
+		console.log('[Subdomain Utils] Localhost subdomain detected:', subdomain)
+		return subdomain || null
+	}
+	
+	// Handle production domains (e.g., company.jobboard.com)
+	const parts = hostname.split('.')
+	
+	// Need at least 3 parts for a subdomain (subdomain.domain.com)
+	if (parts.length >= 3) {
+		const potentialSubdomain = parts[0]
+		// Skip www as it's not a real subdomain
+		if (potentialSubdomain !== 'www') {
+			console.log('[Subdomain Utils] Production subdomain detected:', potentialSubdomain)
+			return potentialSubdomain
+		}
+	}
+	
+	console.log('[Subdomain Utils] No subdomain detected')
+	return null
+}
 
 /**
- * Extract subdomain from current URL
- * Returns null if on main domain (no subdomain)
- * 
- * Examples:
- * - localhost:3000 → null
- * - company-abc.localhost:3000 → "company-abc"
- * - subdomain.yourdomain.com → "subdomain"
+ * Get cookie domain for subdomain support
+ * Returns .localhost for development or .yourdomain.com for production
+ */
+export function getCookieDomain(request: NextRequest): string | undefined {
+	const hostname = request.nextUrl.hostname.toLowerCase()
+	
+	console.log('[Subdomain Utils] Setting cookie for hostname:', hostname)
+	
+	// For localhost:
+	// - If on plain 'localhost', do NOT set a domain (host-only cookie)
+	// - If on '*.localhost' (e.g., company.localhost), set domain to '.localhost'
+	if (hostname === 'localhost') {
+		console.log('[Subdomain Utils] Plain localhost detected, not setting domain')
+		return undefined
+	}
+	if (hostname.endsWith('.localhost')) {
+		console.log('[Subdomain Utils] Subdomain on localhost detected, using domain .localhost')
+		return '.localhost'
+	}
+	
+	// For IP addresses like 127.0.0.1, don't set domain
+	if (hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+		console.log('[Subdomain Utils] IP address detected, not setting domain')
+		return undefined
+	}
+	
+	// For production domains - extract root domain
+	const parts = hostname.split('.')
+	if (parts.length >= 2) {
+		// Return the last two parts with a leading dot
+		const domain = `.${parts.slice(-2).join('.')}`
+		console.log('[Subdomain Utils] Using cookie domain:', domain)
+		return domain
+	}
+	
+	return undefined
+}
+
+/**
+ * Check if domain is a subdomain pattern
+ */
+export function isSubdomain(domain: string): boolean {
+	const subdomain = getSubdomainFromRequest({ nextUrl: { hostname: domain } } as NextRequest)
+	return subdomain !== null
+}
+
+/**
+ * Get current subdomain from browser (client-side)
+ * This is used in client-side code to get the current subdomain
  */
 export function getCurrentSubdomain(): string | null {
 	if (typeof window === 'undefined') {
 		return null
 	}
 	
-	const hostname = window.location.hostname
+	const hostname = window.location.hostname.toLowerCase()
 	
-	// No subdomain on plain localhost or IP
+	// Handle localhost development
 	if (hostname === 'localhost' || hostname === '127.0.0.1') {
 		return null
 	}
@@ -32,103 +108,50 @@ export function getCurrentSubdomain(): string | null {
 		return subdomain || null
 	}
 	
-	// Handle production domains (e.g., company.yourdomain.com)
+	// Handle production domains (e.g., company.jobboard.com)
 	const parts = hostname.split('.')
 	
 	// Need at least 3 parts for a subdomain (subdomain.domain.com)
 	if (parts.length >= 3) {
-		return parts[0]
+		const potentialSubdomain = parts[0]
+		// Skip www as it's not a real subdomain
+		if (potentialSubdomain !== 'www') {
+			return potentialSubdomain
+		}
 	}
 	
-	// No subdomain detected
 	return null
 }
 
 /**
- * Check if currently on a company subdomain
+ * Build subdomain URL for client-side usage
+ * This function constructs URLs with the current subdomain
  */
-export function isOnSubdomain(): boolean {
-	return getCurrentSubdomain() !== null
-}
-
-/**
- * Get the main domain URL (without subdomain)
- */
-export function getMainDomainUrl(): string {
+export function buildSubdomainUrl(path: string = '', subdomain?: string): string {
 	if (typeof window === 'undefined') {
-		return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+		return path
 	}
 	
-	const hostname = window.location.hostname
+	const currentSubdomain = subdomain || getCurrentSubdomain()
+	const hostname = window.location.hostname.toLowerCase()
 	const protocol = window.location.protocol
-	const port = window.location.port
+	const port = window.location.port ? `:${window.location.port}` : ''
 	
-	// For localhost
-	if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-		return `${protocol}//localhost${port ? `:${port}` : ''}`
+	// If we have a subdomain, construct the subdomain URL
+	if (currentSubdomain) {
+		// Handle localhost development
+		if (hostname.includes('localhost')) {
+			return `${protocol}//${currentSubdomain}.localhost${port}${path}`
+		}
+		
+		// Handle production domains
+		const parts = hostname.split('.')
+		if (parts.length >= 2) {
+			const domain = parts.slice(-2).join('.')
+			return `${protocol}//${currentSubdomain}.${domain}${port}${path}`
+		}
 	}
 	
-	// For production - extract root domain
-	const parts = hostname.split('.')
-	if (parts.length >= 2) {
-		const rootDomain = parts.slice(-2).join('.')
-		return `${protocol}//${rootDomain}${port ? `:${port}` : ''}`
-	}
-	
-	return `${protocol}//${hostname}${port ? `:${port}` : ''}`
+	// Fallback to current URL with path
+	return `${protocol}//${hostname}${port}${path}`
 }
-
-/**
- * Build subdomain URL
- */
-export function buildSubdomainUrl(subdomain: string, path: string = '/'): string {
-	const mainUrl = getMainDomainUrl()
-	const urlObj = new URL(mainUrl)
-	
-	// For localhost
-	if (urlObj.hostname === 'localhost') {
-		urlObj.hostname = `${subdomain}.localhost`
-	} else {
-		// For production
-		urlObj.hostname = `${subdomain}.${urlObj.hostname}`
-	}
-	
-	urlObj.pathname = path
-	
-	return urlObj.toString()
-}
-
-/**
- * Validate subdomain format
- * Backend validates: ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$
- */
-export function isValidSubdomain(subdomain: string): boolean {
-	if (!subdomain || subdomain.length === 0 || subdomain.length > 63) {
-		return false
-	}
-	
-	const pattern = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
-	return pattern.test(subdomain)
-}
-
-/**
- * Redirect to correct subdomain
- * Used when user is on wrong subdomain
- */
-export function redirectToCorrectSubdomain(subdomain: string, path: string = '/employer') {
-	if (typeof window === 'undefined') return
-	
-	const targetUrl = buildSubdomainUrl(subdomain, path)
-	window.location.href = targetUrl
-}
-
-/**
- * Redirect to main domain
- */
-export function redirectToMainDomain(path: string = '/') {
-	if (typeof window === 'undefined') return
-	
-	const mainUrl = getMainDomainUrl()
-	window.location.href = `${mainUrl}${path}`
-}
-

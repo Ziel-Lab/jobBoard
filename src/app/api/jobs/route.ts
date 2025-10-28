@@ -1,30 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAccessTokenFromRequest, unauthorizedResponse } from '@/lib/api-auth-helpers'
+import { getSubdomainFromRequest } from '@/lib/subdomain-utils'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
-
-function getSubdomainFromRequest(req: NextRequest): string | null {
-	// Try to get from header first (set by middleware or client)
-	const subdomainHeader = req.headers.get('X-Company-Subdomain')
-	if (subdomainHeader) {
-		return subdomainHeader
-	}
-
-	// Extract from hostname
-	const hostname = req.headers.get('host') || ''
-	const parts = hostname.split('.')
-	
-	// Check if it's a subdomain (e.g., company.localhost:3000 or company.example.com)
-	if (parts.length > 2 || (parts.length === 2 && parts[0] !== 'localhost')) {
-		const subdomain = parts[0]
-		// Filter out common non-subdomain prefixes
-		if (subdomain && subdomain !== 'www' && subdomain !== 'localhost') {
-			return subdomain
-		}
-	}
-	
-	return null
-}
 
 async function proxyRequest(
 	req: NextRequest,
@@ -37,19 +15,26 @@ async function proxyRequest(
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json'
 		}
+		
 		// Read token via helper (cookies or Authorization fallback)
 		const accessToken = await getAccessTokenFromRequest(req)
 		if (!accessToken) {
+			console.error('[Jobs API Proxy] No access token found')
 			return NextResponse.json(unauthorizedResponse(), { status: 401 })
 		}
 		headers['Authorization'] = `Bearer ${accessToken}`
 		
-		const subdomain = getSubdomainFromRequest(req)
+		// Get subdomain from request headers or URL
+		const subdomain = req.headers.get('X-Company-Subdomain') || getSubdomainFromRequest(req)
 		if (subdomain) {
 			headers['X-Company-Subdomain'] = subdomain
+			console.log('[Jobs API Proxy] Using subdomain:', subdomain)
+		} else {
+			console.warn('[Jobs API Proxy] No subdomain provided')
 		}
 
 		const url = `${API_BASE_URL}${endpoint}`
+		console.log('[Jobs API Proxy] Proxying to:', url)
 		
 		const options: RequestInit = {
 			method,
@@ -65,7 +50,39 @@ async function proxyRequest(
 		
 		// Handle different response statuses
 		if (!response.ok) {
-			const errorData = await response.json().catch(() => ({ message: response.statusText }))
+			const errorData = await response.json().catch(() => ({ 
+				message: response.statusText,
+				error: response.statusText 
+			}))
+			
+			console.error('[Jobs API Proxy] Backend error:', {
+				status: response.status,
+				statusText: response.statusText,
+				error: errorData
+			})
+			
+			// Handle specific error cases
+			if (response.status === 401) {
+				return NextResponse.json(
+					{ success: false, message: 'Invalid or expired token', data: null },
+					{ status: 401 }
+				)
+			}
+			
+			if (response.status === 403) {
+				return NextResponse.json(
+					{ success: false, message: errorData.message || 'Access forbidden - subdomain may not match your company', data: null },
+					{ status: 403 }
+				)
+			}
+			
+			if (response.status === 400) {
+				return NextResponse.json(
+					{ success: false, message: errorData.message || 'Invalid request data', data: null },
+					{ status: 400 }
+				)
+			}
+			
 			return NextResponse.json(
 				{ success: false, message: errorData.message || 'Request failed', data: null },
 				{ status: response.status }
@@ -78,6 +95,7 @@ async function proxyRequest(
 		}
 
 		const data = await response.json()
+		console.log('[Jobs API Proxy] Success response received')
 		return NextResponse.json({ success: true, data, message: 'Success' })
 	} catch (error) {
 		console.error('[Jobs API Proxy] Error:', error)

@@ -19,7 +19,7 @@ export interface ApplicationFormData {
     portfolioUrl?: string
 }
 
-export default function ApplicationForm({ jobId, jobTitle, companyName, onClose, onSubmit }: ApplicationFormProps) {
+export default function ApplicationForm({ jobTitle, companyName, onClose, onSubmit }: ApplicationFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState({
         fullName: '',

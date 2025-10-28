@@ -1,6 +1,5 @@
 'use client'
 
-import { useMemo } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 
 function useUpdateSearchParams ()

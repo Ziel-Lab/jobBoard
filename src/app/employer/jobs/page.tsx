@@ -62,9 +62,12 @@ export default function ManageJobsPage() {
 					query.jobStatus = statusFilter as Job['jobStatus']
 				}
 
-				const response = await jobsApi.listJobs(query)
-				if (response) {
-					setJobs(response.jobs || [])
+				const { jobs: jobsData, error } = await jobsApi.listJobs(query)
+				if (error) {
+					console.error('Error fetching jobs:', error.message)
+					setJobs([])
+				} else if (jobsData) {
+					setJobs(jobsData.jobs || [])
 				}
 			} catch (error) {
 				console.error('Error fetching jobs:', error)
@@ -96,25 +99,25 @@ export default function ManageJobsPage() {
 
 	const confirmDelete = async () => {
 		if (jobToDelete) {
-			const success = await jobsApi.deleteJob(jobToDelete)
+			const { success, error } = await jobsApi.deleteJob(jobToDelete)
 			if (success) {
 				setJobs(jobs.filter(job => job.id !== jobToDelete))
 				setShowDeleteModal(false)
 				setJobToDelete(null)
 			} else {
-				alert('Failed to delete job. Please try again.')
+				alert(`Failed to delete job: ${error?.message || 'Please try again.'}`)
 			}
 		}
 	}
 
 	const changeJobStatus = async (jobId: string, newStatus: Job['jobStatus']) => {
-		const updatedJob = await jobsApi.changeJobStatus(jobId, { status: newStatus })
+		const { job: updatedJob, error } = await jobsApi.changeJobStatus(jobId, { status: newStatus })
 		if (updatedJob) {
 			setJobs(jobs.map(job => 
 				job.id === jobId ? updatedJob : job
 			))
 		} else {
-			alert('Failed to update job status. Please try again.')
+			alert(`Failed to update job status: ${error?.message || 'Please try again.'}`)
 		}
 	}
 

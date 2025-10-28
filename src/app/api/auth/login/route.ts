@@ -1,46 +1,10 @@
 import { NextResponse } from 'next/server'
+import { getCookieDomain } from '@/lib/subdomain-utils'
+import type { NextRequest } from 'next/server'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
 
-/**
- * Get cookie domain for subdomain support
- * Returns .localhost for development or .yourdomain.com for production
- */
-function getCookieDomain(req: Request): string | undefined {
-	const hostname = new URL(req.url).hostname
-	
-	console.log('[Login API] Setting cookie for hostname:', hostname)
-	
-	// For localhost:
-	// - If on plain 'localhost', do NOT set a domain (host-only cookie)
-	// - If on '*.localhost' (e.g., company.localhost), set domain to '.localhost'
-	if (hostname === 'localhost') {
-		console.log('[Login API] Plain localhost detected, not setting domain')
-		return undefined
-	}
-	if (hostname.endsWith('.localhost')) {
-		console.log('[Login API] Subdomain on localhost detected, using domain .localhost')
-		return '.localhost'
-	}
-	
-	// For IP addresses like 127.0.0.1, don't set domain
-	if (hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
-		console.log('[Login API] IP address detected, not setting domain')
-		return undefined
-	}
-	
-	// For production domains - extract root domain
-	const parts = hostname.split('.')
-	if (parts.length >= 2) {
-		// Return the last two parts with a leading dot
-		const domain = `.${parts.slice(-2).join('.')}`
-		console.log('[Login API] Using cookie domain:', domain)
-		return domain
-	}
-	
-	return undefined
-}
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json();
 		console.log('[Login API] Login attempt for:', body.email);

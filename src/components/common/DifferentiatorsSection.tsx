@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { FiZap, FiTarget, FiClock, FiExternalLink } from 'react-icons/fi'
-import ShinyText from '../ui/ShinyText'
 
 interface DifferentiatorItem {
 	icon: React.ReactNode

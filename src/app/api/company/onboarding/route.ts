@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-// Validation schema for onboarding data
+// Validation schema for onboarding data (matches frontend structure)
 const onboardingSchema = z.object({
 	companyData: z.object({
 		companyName: z.string().min(2),
@@ -36,29 +36,82 @@ export async function POST(request: NextRequest) {
 		// Validate the request body
 		const validatedData = onboardingSchema.parse(body)
 		
-		// TODO: Save to database
-		// For now, we'll just log the data and return success
-		console.log('Company onboarding data:', validatedData)
-		
-		// Simulate processing time
-		await new Promise(resolve => setTimeout(resolve, 1000))
-		
-		// TODO: Send team member invitations if any
-		if (validatedData.teamData.teamMembers && validatedData.teamData.teamMembers.length > 0) {
-			console.log('Sending team invitations:', validatedData.teamData.teamMembers)
-			// Here you would typically:
-			// 1. Create user accounts for team members
-			// 2. Send invitation emails
-			// 3. Set up proper permissions
+		// Generate subdomain from company name
+		const generateSubdomain = (companyName: string): string => {
+			return companyName
+				.toLowerCase()
+				.replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+				.replace(/\s+/g, '-') // Replace spaces with hyphens
+				.replace(/-+/g, '-') // Replace multiple hyphens with single
+				.replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+		}
+
+		// Transform frontend data structure to match backend API expectations
+		const backendPayload = {
+			company: {
+				company_name: validatedData.companyData.companyName,
+				industry: validatedData.companyData.industry,
+				company_size: validatedData.companyData.size,
+				location: validatedData.companyData.location,
+				website_url: validatedData.companyData.website || '',
+				company_description: validatedData.companyData.description,
+				subdomain: generateSubdomain(validatedData.companyData.companyName),
+			},
+			team: (validatedData.teamData.teamMembers || []).map(member => ({
+				email: member.email,
+				role: member.role,
+				department: member.department,
+			})),
+			settings: {
+				timezone: validatedData.preferencesData.timezone,
+				jobPostingFrequency: validatedData.preferencesData.jobPostingFrequency,
+				notifications: {
+					email: validatedData.preferencesData.notificationPreferences.emailNotifications,
+					sms: validatedData.preferencesData.notificationPreferences.smsNotifications,
+					marketingEmails: validatedData.preferencesData.notificationPreferences.marketingEmails,
+				},
+			},
 		}
 		
+		console.log('Transformed payload for backend:', backendPayload)
+		
+		// Forward the request to the backend API
+		const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
+		const backendResponse = await fetch(`${backendUrl}/company/onboarding`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				// Forward the authorization header if present
+				...(request.headers.get('authorization') && {
+					'Authorization': request.headers.get('authorization')!
+				}),
+				// Forward cookies for authentication
+				...(request.headers.get('cookie') && {
+					'Cookie': request.headers.get('cookie')!
+				}),
+			},
+			body: JSON.stringify(backendPayload),
+		})
+		
+		const backendResult = await backendResponse.json()
+		
+		if (!backendResponse.ok) {
+			console.error('Backend API error:', backendResult)
+			return NextResponse.json(
+				{
+					success: false,
+					message: backendResult.message || 'Backend API error',
+					errors: backendResult.errors || [],
+				},
+				{ status: backendResponse.status }
+			)
+		}
+		
+		// Return the backend response with success status
 		return NextResponse.json({
 			success: true,
-			message: 'Company onboarding completed successfully',
-			data: {
-				companyId: 'temp-company-id', // TODO: Return actual company ID from database
-				teamInvitationsSent: validatedData.teamData.teamMembers?.length || 0,
-			},
+			message: backendResult.message || 'Company onboarding completed successfully',
+			...backendResult, // Include subdomain, redirectUrl, etc. from backend
 		})
 		
 	} catch (error) {

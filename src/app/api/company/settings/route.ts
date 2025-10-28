@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // GET endpoint to retrieve company settings
-export async function GET(request: NextRequest) {
+export async function GET() {
 	try {
 		// TODO: Fetch company settings from database
 		// For now, return mock data

@@ -139,7 +139,11 @@ export default function PostNewJobPage() {
 		setIsSubmitting(true)
 		try {
 			// Use the authenticated API client instead of direct fetch
-			const createdJob = await jobsApi.createJob(data)
+			const { job: createdJob, error } = await jobsApi.createJob(data)
+
+			if (error) {
+				throw new Error(error.message || 'Failed to create job')
+			}
 
 			if (!createdJob) {
 				throw new Error('Failed to create job')
