@@ -47,8 +47,8 @@ function isSubdomain(domain: string): boolean {
  * Get user session from Flask backend via cookies
  */
 async function getUserSession(request: NextRequest): Promise<{
-	user: any | null
-	company: any | null
+	user: { authenticated: boolean; onboarding_completed?: boolean } | null
+	company: unknown | null
 	subdomain: string | null
 } | null> {
 	try {
@@ -92,16 +92,16 @@ async function getAssociatedProject(subdomain: string): Promise<string | null> {
 
 export default async function middleware(request: NextRequest) {
 	const host = request.headers.get("host") as string
-	const domain = host.replace("www.", "").toLowerCase()
 	const pathname = request.nextUrl.pathname
 	const subdomain = getSubdomainFromRequest(request)
 	
-	// Build full path with search params
-	const searchParams = request.nextUrl.searchParams.toString()
-	const searchParamsString = searchParams.length > 0 ? `?${searchParams}` : ""
-	const fullPath = `${pathname}${searchParamsString}`
+	console.log(`[Middleware] Processing: ${host}${pathname}`)
 
-	console.log(`[Middleware] Processing: ${domain}${fullPath}`)
+	// Simple test - if subdomain and careers path, rewrite
+	if (host.includes('symb-technologies.localhost') && pathname === '/careers') {
+		console.log(`[Middleware] Rewriting subdomain careers: symb-technologies`)
+		return NextResponse.rewrite(new URL(`/_subdomain/symb-technologies/careers`, request.url))
+	}
 
 	// Get user session from Flask backend
 	const session = await getUserSession(request)
@@ -111,6 +111,15 @@ export default async function middleware(request: NextRequest) {
 	// Handle subdomain routes
 	if (subdomain) {
 		console.log(`[Middleware] Subdomain detected: ${subdomain}`)
+		
+		// Allow public access to subdomain career pages
+		if (pathname === '/' || pathname === '/careers') {
+			console.log(`[Middleware] Public subdomain route, allowing access: ${pathname}`)
+			console.log(`[Middleware] Rewriting to: /_subdomain/${subdomain}${pathname}`)
+			const rewriteUrl = new URL(`/_subdomain/${subdomain}${pathname}`, request.url)
+			console.log(`[Middleware] Rewrite URL: ${rewriteUrl.toString()}`)
+			return NextResponse.rewrite(rewriteUrl)
+		}
 		
 		// If no user, always force redirect to sign-in (except for public routes)
 		if (!user && !PUBLIC_ROUTES.has(pathname) && !AUTH_ROUTES.has(pathname)) {
@@ -122,6 +131,9 @@ export default async function middleware(request: NextRequest) {
 		if (user && host.includes("localhost") && !pathname.includes("/login")) {
 			// You might want to get the user's default project from their session
 			const defaultProject = userSubdomain || "default" // This should come from user data
+			const searchParams = request.nextUrl.searchParams.toString()
+			const searchParamsString = searchParams.length > 0 ? `?${searchParams}` : ""
+			const fullPath = `${pathname}${searchParamsString}`
 			console.log(`[Middleware] Localhost with user, redirecting to default project: ${defaultProject}`)
 			return NextResponse.rewrite(new URL(`/${defaultProject}${fullPath}`, request.url))
 		}
@@ -132,6 +144,9 @@ export default async function middleware(request: NextRequest) {
 
 		// User has access to this project
 		if (user && isProjectMember) {
+			const searchParams = request.nextUrl.searchParams.toString()
+			const searchParamsString = searchParams.length > 0 ? `?${searchParams}` : ""
+			const fullPath = `${pathname}${searchParamsString}`
 			console.log(`[Middleware] User has access to project: ${projectSlug}`)
 			return NextResponse.rewrite(new URL(`/${projectSlug}${fullPath}`, request.url))
 		}
@@ -146,12 +161,6 @@ export default async function middleware(request: NextRequest) {
 		if (user && !pathname.startsWith('/_subdomain/')) {
 			if (pathname.startsWith('/employer')) {
 				const newUrl = new URL(`/_subdomain/${subdomain}/employer${pathname.replace('/employer', '')}`, request.url)
-				console.log('[Middleware] Rewriting subdomain route:', pathname, '->', newUrl.pathname)
-				return NextResponse.rewrite(newUrl)
-			}
-			
-			if (pathname.startsWith('/careers')) {
-				const newUrl = new URL(`/_subdomain/${subdomain}/careers${pathname.replace('/careers', '')}`, request.url)
 				console.log('[Middleware] Rewriting subdomain route:', pathname, '->', newUrl.pathname)
 				return NextResponse.rewrite(newUrl)
 			}

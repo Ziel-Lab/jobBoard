@@ -119,7 +119,7 @@ function VerifyEmailContent() {
 				res?.profile?.onboarding_completed === false ||
 				!res?.profile?.company_id
 			
-			const redirectPath = needsSetup ? '/company/onboarding' : '/employer'
+			const redirectPath = needsSetup ? '/login' : '/employer'
 			
 			console.log('Email verified. Profile:', res?.profile)
 			console.log('needsCompanySetup:', res?.needsCompanySetup)
