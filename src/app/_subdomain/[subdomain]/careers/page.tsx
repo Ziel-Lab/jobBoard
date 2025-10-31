@@ -10,6 +10,52 @@ import CompanyAbout from '@/components/career/CompanyAbout'
 import CareerFooter from '@/components/career/CareerFooter'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
+// Helper function to get subdomain from current URL
+const getSubdomainFromUrl = (): string => {
+  if (typeof window === 'undefined') return 'symb-technologies' // SSR fallback
+  
+  const hostname = window.location.hostname
+  if (hostname.includes('localhost')) {
+    // Extract subdomain from localhost URL (e.g., symb-technologies.localhost:3000)
+    const parts = hostname.split('.')
+    return parts[0] !== 'localhost' ? parts[0] : 'symb-technologies'
+  }
+  
+  // For production domains, extract subdomain
+  const parts = hostname.split('.')
+  return parts.length > 2 ? parts[0] : 'symb-technologies'
+}
+
+// Helper function to transform API response to Company type
+const transformCompanyData = (apiData: Record<string, unknown>): Company => {
+  return {
+    id: String(apiData.id),
+    subdomain: String(apiData.subdomain),
+    companyName: String(apiData.companyName),
+    logoUrl: String(apiData.logoUrl),
+    websiteUrl: String(apiData.website),
+    industry: String(apiData.industry),
+    companySize: apiData.companySize === '11-50 employees' ? 'medium' : 'small',
+    subscriptionTier: 'premium',
+    subscriptionStatus: 'active',
+    settings: {},
+    branding: {
+      primaryColor: (apiData.branding as Record<string, unknown>)?.primaryColor as string || '#3B82F6',
+      secondaryColor: (apiData.branding as Record<string, unknown>)?.secondaryColor as string || '#1E40AF',
+      accentColor: '#F59E0B',
+      textColor: '#1F2937',
+      backgroundColor: '#FFFFFF'
+    },
+    isActive: Boolean(apiData.isActive),
+    isVerified: Boolean(apiData.isVerified),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    location: String(apiData.location),
+    companyDescription: String(apiData.description),
+    ownerId: 'owner-1'
+  }
+}
+
 // Mock data for demonstration
 const mockCompanyData: Company = {
   id: '1',
@@ -134,17 +180,42 @@ export default function CareersPage() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [isLoading, setIsLoading] = useState(true)
   useEffect(() => {
-    // Simulate API call
     const loadData = async () => {
       setIsLoading(true)
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // In real implementation, fetch from API based on subdomain
-      setCompany(mockCompanyData)
-      setJobs(mockJobsData)
-      setIsLoading(false)
+      try {
+        // Get subdomain from URL params or current URL
+        const subdomain = getSubdomainFromUrl()
+        const apiUrl = `/api/company/public/${subdomain}`
+        
+        console.log('Fetching company data for subdomain:', subdomain)
+        console.log('API URL:', apiUrl)
+        
+        // Fetch company data from Next.js API route
+        const companyResponse = await fetch(apiUrl)
+        if (!companyResponse.ok) {
+          throw new Error(`Failed to fetch company data: ${companyResponse.status} ${companyResponse.statusText}`)
+        }
+        const companyData = await companyResponse.json()
+        
+        console.log('Company data received:', companyData)
+        
+        // Transform API data to Company type
+        const transformedCompany = transformCompanyData(companyData)
+        setCompany(transformedCompany)
+        
+        // For now, keep using mock jobs data
+        // TODO: Replace with real jobs API when available
+        setJobs(mockJobsData)
+        
+      } catch (error) {
+        console.error('Error fetching company data:', error)
+        // Fallback to mock data if API fails
+        setCompany(mockCompanyData)
+        setJobs(mockJobsData)
+      } finally {
+        setIsLoading(false)
+      }
     }
     
     loadData()

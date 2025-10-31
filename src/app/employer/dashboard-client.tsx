@@ -233,13 +233,13 @@ export default function DashboardClient({ stats, recentJobs }: DashboardClientPr
 							>
 								<div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
 									{/* Left side - Job info */}
-									<div className="flex-1">
+									<div className="flex-1 min-w-0">
 										<div className="flex items-start gap-3 mb-3">
 											<div className="bg-indigo-500/20 p-2 rounded-lg">
 												<Briefcase className="w-5 h-5 text-indigo-400" />
 											</div>
 											<div className="flex-1">
-												<h3 className="text-lg font-semibold text-white mb-1">
+									<h3 className="text-lg font-semibold text-white mb-1 break-words">
 													{job.jobTitle}
 												</h3>
 												<div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
@@ -260,7 +260,7 @@ export default function DashboardClient({ stats, recentJobs }: DashboardClientPr
 											</div>
 										</div>
 
-										<p className="text-white/70 text-sm mb-3 line-clamp-2">
+									<p className="text-white/70 text-sm mb-3 line-clamp-2 break-all overflow-hidden">
 											{job?.jobDescription}
 										</p>
 

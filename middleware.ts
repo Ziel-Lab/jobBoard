@@ -30,9 +30,9 @@ const AUTH_ROUTES = new Set([
 ])
 
 const PROTECTED_ROUTES = new Set([
-	"/employer",
-	"/company/onboarding",
-	"/company/settings"
+    "/employer",
+    "/company/onboarding",
+    "/company/settings"
 ])
 
 /**
@@ -187,13 +187,26 @@ export default async function middleware(request: NextRequest) {
 		return NextResponse.redirect(new URL("/", request.url))
 	}
 
-	// Handle protected routes
-	if (PROTECTED_ROUTES.has(pathname) && !user) {
-		console.log(`[Middleware] Protected route without user: ${pathname}`)
-		const loginUrl = new URL('/login', request.url)
-		loginUrl.searchParams.set('redirect', pathname)
-		return NextResponse.redirect(loginUrl)
-	}
+    // Handle protected routes (support nested paths)
+    const isEmployerRoute = pathname === '/employer' || pathname.startsWith('/employer/')
+    const isCompanyRoute = pathname.startsWith('/company/')
+    const isProtected = isEmployerRoute || isCompanyRoute || PROTECTED_ROUTES.has(pathname)
+
+    if (isProtected) {
+        if (!user) {
+            console.log(`[Middleware] Protected route without user: ${pathname}`)
+            const loginUrl = new URL('/login', request.url)
+            loginUrl.searchParams.set('redirect', pathname)
+            return NextResponse.redirect(loginUrl)
+        }
+        // Enforce subdomain for employer area
+        if (isEmployerRoute && !subdomain) {
+            console.log('[Middleware] Employer route without subdomain, redirecting to login')
+            const loginUrl = new URL('/login', request.url)
+            loginUrl.searchParams.set('redirect', pathname)
+            return NextResponse.redirect(loginUrl)
+        }
+    }
 
 	// Handle onboarding redirect
 	if (user && user.onboarding_completed !== true && pathname !== "/company/onboarding") {

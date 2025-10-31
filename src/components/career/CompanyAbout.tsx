@@ -41,11 +41,7 @@ export default function CompanyAbout({ company }: CompanyAboutProps) {
                 {company.companyDescription}
               </p>
               
-              <p className="text-lg leading-relaxed">
-                We are committed to fostering a diverse and inclusive workplace where everyone can thrive. 
-                Our team is made up of passionate individuals who are dedicated to making a positive impact 
-                through technology and innovation.
-              </p>
+              
             </div>
           </div>
 

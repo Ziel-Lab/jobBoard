@@ -26,9 +26,9 @@ const getSubdomainFromUrl = (): string => {
   return parts.length > 2 ? parts[0] : 'symb-technologies'
 }
 
-// API endpoint for company data
+// API endpoint for company data - use Next.js API route to avoid CORS
 const getCompanyApiUrl = (subdomain: string): string => 
-  `http://localhost:80/api/company/careers/${subdomain}`
+  `/api/company/public/${subdomain}`
 
 // Helper function to transform API response to Company type
 const transformCompanyData = (apiData: Record<string, unknown>): Company => {

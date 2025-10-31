@@ -1,5 +1,7 @@
 import DashboardClient from './dashboard-client'
 import type { Job } from '@/types/job'
+import { headers, cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,44 +12,81 @@ interface DashboardStats {
 	newApplications: number
 }
 
+async function extractSubdomain(): Promise<string | null> {
+    const hdrs = await headers()
+    const direct = hdrs.get('X-Company-Subdomain') || hdrs.get('x-company-subdomain')
+    if (direct) return direct
+
+    const host = hdrs.get('host') || ''
+    const hostname = host.split(':')[0]
+    if (hostname.endsWith('.localhost')) {
+        return hostname.replace('.localhost', '') || null
+    }
+    const parts = hostname.split('.')
+    if (parts.length > 2 && parts[0] !== 'www') {
+        return parts[0]
+    }
+    return null
+}
+
 async function fetchDashboardData() {
-	// In a real app, these would be actual API calls
-	// For now, we'll return mock data
-	const stats: DashboardStats = {
-		totalJobs: 24,
-		activeJobs: 18,
-		totalApplications: 342,
-		newApplications: 28,
-	}
+    const stats: DashboardStats = {
+        totalJobs: 0,
+        activeJobs: 0,
+        totalApplications: 0,
+        newApplications: 0,
+    }
 
-	const recentJobs: Job[] = [
-		{
-			id: '1',
-			jobTitle: 'Senior Frontend Developer',
-			company: 'TechCorp Inc.',
-			officeLocation: 'San Francisco, CA',
-			isRemote: true,
-			minSalary: 120000,
-			maxSalary: 180000,
-			currency: 'USD',
-			jobDescription: 'We are looking for an experienced frontend developer to join our team...',
-			keyResponsibilities: '• Build responsive web applications\n• Collaborate with design team\n• Mentor junior developers',
-			requirementsQualifications: '• 5+ years React experience\n• Strong TypeScript skills\n• Experience with Next.js',
-			benefitsPerks: '• Competitive salary\n• Health insurance\n• Remote work options',
-			requiredSkills: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS'],
-			experienceLevel: 'senior',
-			employmentType: 'full_time',
-			jobStatus: 'published',
-			createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-			updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-			companyId: 'company-1',
-		}
-	]
+    type PublicJobsResponse = {
+        jobs: Job[]
+        total: number
+        page: number
+        pageSize: number
+        totalPages: number
+        company?: unknown
+    }
 
-	return { stats, recentJobs }
+    const params = new URLSearchParams({
+        page: '1',
+        pageSize: '5',
+        sortBy: 'created_at',
+        sortOrder: 'desc',
+    })
+
+	const subdomain = await extractSubdomain()
+	const hdrs = await headers()
+	const host = hdrs.get('x-forwarded-host') || hdrs.get('host') || 'localhost:3000'
+	const proto = hdrs.get('x-forwarded-proto') || 'http'
+	const baseUrl = `${proto}://${host}`
+
+	const res = await fetch(`${baseUrl}/api/jobs/public?${params.toString()}`,
+    {
+        method: 'GET',
+        headers: subdomain ? { 'X-Company-Subdomain': subdomain } : {},
+        cache: 'no-store'
+    })
+    if (!res.ok) {
+        return { stats, recentJobs: [] as Job[] }
+    }
+    const json = (await res.json()) as { success: boolean; data: PublicJobsResponse | null }
+    const payload = json?.data
+    const recentJobs = payload?.jobs ?? []
+    if (payload) {
+        stats.totalJobs = payload.total || recentJobs.length
+        stats.activeJobs = payload.total || recentJobs.length
+    }
+
+    return { stats, recentJobs }
 }
 
 export default async function EmployerPage() {
+    // Enforce auth + subdomain guard at the page level
+    const cookieStore = await cookies()
+    const accessToken = cookieStore.get('accessToken')?.value
+    const subdomain = await extractSubdomain()
+    if (!accessToken || !subdomain) {
+        redirect('/login?redirect=/employer')
+    }
 	const { stats, recentJobs } = await fetchDashboardData()
 
 	return <DashboardClient stats={stats} recentJobs={recentJobs} />

@@ -29,7 +29,23 @@ export class AuthenticatedApiClient {
       delete headers['Content-Type']
     }
     const sub = getCurrentSubdomain()
-    if (sub) headers['X-Company-Subdomain'] = sub
+    
+    // If no subdomain detected from URL, try to get it from localStorage
+    let finalSubdomain = sub
+    if (!finalSubdomain && typeof window !== 'undefined') {
+      try {
+        finalSubdomain = localStorage.getItem('subdomain')
+      } catch (error) {
+        // ignore localStorage errors
+      }
+    }
+    
+    // For localhost development, use a default subdomain if none is found
+    if (!finalSubdomain && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      finalSubdomain = 'symb-technologies' // Default subdomain for localhost development
+    }
+    
+    if (finalSubdomain) headers['X-Company-Subdomain'] = finalSubdomain
     return headers
   }
 

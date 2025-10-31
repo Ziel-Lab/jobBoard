@@ -2,7 +2,7 @@ export interface Company {
   id: string
   subdomain: string
   companyName: string
-  logoUrl?: string
+  logoUrl?: string | null
   websiteUrl?: string
   industry: string
   companySize: 'startup' | 'small' | 'medium' | 'large' | 'enterprise'

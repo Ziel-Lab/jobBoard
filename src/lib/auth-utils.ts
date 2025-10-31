@@ -45,7 +45,13 @@ export function getAuthHeaders(): AuthHeaders {
   // Include known non-sensitive metadata (subdomain) when available for routing
   if (typeof window !== 'undefined') {
     try {
-      const sub = localStorage.getItem('subdomain')
+      let sub = localStorage.getItem('subdomain')
+      
+      // For localhost development, use a default subdomain if none is found
+      if (!sub && window.location.hostname === 'localhost') {
+        sub = 'symb-technologies' // Default subdomain for localhost development
+      }
+      
       if (sub) headers['X-Company-Subdomain'] = sub
     } catch {}
   }

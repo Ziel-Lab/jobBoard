@@ -253,7 +253,7 @@ function CompanyOnboardingPage() {
 				} else {
 					// Fallback to local /employer if no subdomain provided
 					console.warn('No subdomain in response, redirecting to /employer')
-					window.location.href = '/employer'
+					window.location.href = '/careers'
 				}
 			}, 2000)
 		} catch (error) {

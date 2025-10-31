@@ -63,11 +63,14 @@ export default function ManageJobsPage() {
 				}
 
 				const { jobs: jobsData, error } = await jobsApi.listJobs(query)
+				
 				if (error) {
 					console.error('Error fetching jobs:', error.message)
 					setJobs([])
 				} else if (jobsData) {
 					setJobs(jobsData.jobs || [])
+				} else {
+					setJobs([])
 				}
 			} catch (error) {
 				console.error('Error fetching jobs:', error)
