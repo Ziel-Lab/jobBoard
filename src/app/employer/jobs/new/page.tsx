@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { jobsApi } from '@/lib/jobs-api'
+import { IoArrowBackOutline } from 'react-icons/io5'
+import { LocationAutocomplete } from '@/components/jobs/location-autocomplete'
 
 // Validation schema for job posting
 const jobPostingSchema = z.object({
@@ -195,19 +197,7 @@ export default function PostNewJobPage() {
 						onClick={() => router.back()}
 						className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-white/80 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200"
 					>
-						<svg 
-							xmlns="http://www.w3.org/2000/svg" 
-							width="16" 
-							height="16" 
-							viewBox="0 0 24 24" 
-							fill="none" 
-							stroke="currentColor" 
-							strokeWidth="2" 
-							strokeLinecap="round" 
-							strokeLinejoin="round"
-						>
-							<path d="m15 18-6-6 6-6"/>
-						</svg>
+						<IoArrowBackOutline className="w-4 h-4" />
 						Back 
 					</button>
 					<h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
@@ -221,7 +211,7 @@ export default function PostNewJobPage() {
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<div className="space-y-6">
 						{/* Basic Information */}
-						<div className="rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl p-6 relative z-10">
+						<div className="rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl p-6 relative z-30">
 							<div className="flex items-center gap-3 mb-6">
 								<div className="bg-indigo-500/20 p-2 rounded-lg">
 									<Briefcase className="w-5 h-5 text-indigo-400" />
@@ -247,48 +237,52 @@ export default function PostNewJobPage() {
 									)}
 								</div>
 
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-									<div>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+									<div className="relative">
 										<label className="block text-sm font-medium text-white/90 mb-2">
 											Employment Type *
 										</label>
-										<CustomSelect
-											options={[
-												{ value: 'full_time', label: 'Full-time' },
-												{ value: 'part_time', label: 'Part-time' },
-												{ value: 'contract', label: 'Contract' },
-												{ value: 'internship', label: 'Internship' },
-											]}
-											value={employmentType || ''}
-											onChange={(value) => setValue('employmentType', value as JobPostingForm['employmentType'])}
-											placeholder="Select employment type"
-											error={errors.employmentType?.message}
-										/>
+										<div className="relative z-[10000]">
+											<CustomSelect
+												options={[
+													{ value: 'full_time', label: 'Full-time' },
+													{ value: 'part_time', label: 'Part-time' },
+													{ value: 'contract', label: 'Contract' },
+													{ value: 'internship', label: 'Internship' },
+												]}
+												value={employmentType || ''}
+												onChange={(value) => setValue('employmentType', value as JobPostingForm['employmentType'])}
+												placeholder="Select employment type"
+												error={errors.employmentType?.message}
+											/>
+										</div>
 									</div>
 
-									<div>
+									<div className="relative">
 										<label className="block text-sm font-medium text-white/90 mb-2">
 											Experience Level *
 										</label>
-										<CustomSelect
-											options={[
-												{ value: 'entry', label: 'Entry Level' },
-												{ value: 'mid', label: 'Mid Level' },
-												{ value: 'senior', label: 'Senior Level' },
-												{ value: 'lead', label: 'Lead/Principal' },
-											]}
-											value={experienceLevel || ''}
-											onChange={(value) => setValue('experienceLevel', value as JobPostingForm['experienceLevel'])}
-											placeholder="Select experience level"
-											error={errors.experienceLevel?.message}
-										/>
+										<div className="relative z-[9999]">
+											<CustomSelect
+												options={[
+													{ value: 'entry', label: 'Entry Level' },
+													{ value: 'mid', label: 'Mid Level' },
+													{ value: 'senior', label: 'Senior Level' },
+													{ value: 'lead', label: 'Lead/Principal' },
+												]}
+												value={experienceLevel || ''}
+												onChange={(value) => setValue('experienceLevel', value as JobPostingForm['experienceLevel'])}
+												placeholder="Select experience level"
+												error={errors.experienceLevel?.message}
+											/>
+										</div>
 									</div>
 								</div>
 							</div>
 						</div>
 
 						{/* Location */}
-						<div className=" rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl p-6">
+						<div className="rounded-2xl border border-white/20 bg-white/5 backdrop-blur-xl p-6 relative z-20">
 							<div className="flex items-center gap-3 mb-6">
 								<div className="bg-emerald-500/20 p-2 rounded-lg">
 									<MapPin className="w-5 h-5 text-emerald-400" />
@@ -297,21 +291,19 @@ export default function PostNewJobPage() {
 							</div>
 
 							<div className="space-y-4">
-								<div>
+								<div className="relative z-[9999]">
 									<label className="block text-sm font-medium text-white/90 mb-2">
 										Office Location *
 									</label>
-									<input
-										{...register('officeLocation')}
-										className={getInputClasses(!!errors.officeLocation)}
+									<LocationAutocomplete
+										value={watch('officeLocation') || ''}
+										onChange={(value) => {
+											setValue('officeLocation', value)
+											trigger('officeLocation')
+										}}
 										placeholder="e.g. San Francisco, CA"
+										error={errors.officeLocation?.message}
 									/>
-									{errors.officeLocation && (
-										<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-											<AlertCircle className="w-4 h-4" />
-											{errors.officeLocation.message}
-										</p>
-									)}
 								</div>
 
 								<label className="flex items-center gap-3 cursor-pointer">
@@ -344,7 +336,7 @@ export default function PostNewJobPage() {
 							</div>
 
 							<div className="space-y-4">
-								<div>
+								<div className="relative z-[9999]">
 									<label className="block text-sm font-medium text-white/90 mb-2">
 										Currency *
 									</label>

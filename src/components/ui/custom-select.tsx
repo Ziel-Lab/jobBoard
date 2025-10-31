@@ -71,7 +71,7 @@ export function CustomSelect({
 	}
 
 	return (
-		<div ref={selectRef} className={`relative z-50 ${className}`} style={{ isolation: 'isolate' }}>
+		<div ref={selectRef} className={`relative ${className}`}>
 			{/* Select Button */}
 			<button
 				type="button"
@@ -94,7 +94,7 @@ export function CustomSelect({
 
 			{/* Dropdown Menu */}
 			{isOpen && (
-				<div className="absolute z-50 w-full mt-2 rounded-lg border border-white/30 bg-[rgba(17,17,17,0.98)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.1)_inset] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+				<div className="absolute z-[10000] top-full w-full mt-2 rounded-lg border border-white/40 bg-black/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
 					{/* Search Input */}
 					<div className="p-2 border-b border-white/10">
 						<input
@@ -118,7 +118,7 @@ export function CustomSelect({
 									onClick={() => handleSelect(option.value)}
 									className={`w-full px-4 py-3 text-sm text-left transition-colors duration-150 flex items-center justify-between ${
 										option.value === value
-											? 'bg-indigo-600/30 text-white'
+											? 'bg-gray-900 text-white'
 											: 'text-white/90 hover:bg-white/10'
 									}`}
 								>

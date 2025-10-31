@@ -18,6 +18,8 @@ import {
 import { CustomSelect } from '@/components/ui/custom-select'
 import { jobsApi } from '@/lib/jobs-api'
 import type { Job, JobsQuery } from '@/types/job'
+import EmployerNavbar from '@/components/ui/employer-navbar'
+import { IoArrowBackOutline } from 'react-icons/io5'
 
 const statusOptions = [
 	{ value: 'all', label: 'All Status' },
@@ -164,6 +166,7 @@ export default function ManageJobsPage() {
 	return (
 		<main className="min-h-screen bg-black relative overflow-hidden">
 			{/* Ambient light effects */}
+			<EmployerNavbar />
 			<div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
 			<div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
 			<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl" />
@@ -209,19 +212,7 @@ export default function ManageJobsPage() {
 						onClick={() => router.back()}
 						className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-white/80 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200"
 					>
-						<svg 
-							xmlns="http://www.w3.org/2000/svg" 
-							width="16" 
-							height="16" 
-							viewBox="0 0 24 24" 
-							fill="none" 
-							stroke="currentColor" 
-							strokeWidth="2" 
-							strokeLinecap="round" 
-							strokeLinejoin="round"
-						>
-							<path d="m15 18-6-6 6-6"/>
-						</svg>
+						<IoArrowBackOutline className="w-4 h-4" />
 						Back
 					</button>
 

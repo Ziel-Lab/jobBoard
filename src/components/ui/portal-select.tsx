@@ -151,7 +151,7 @@ export function PortalSelect({
 							onClick={() => handleSelect(option.value)}
 							className={`w-full px-4 py-3 text-sm text-left transition-colors duration-150 flex items-center justify-between ${
 								option.value === value
-									? 'bg-indigo-600/30 text-white'
+									? 'bg-gray-900 text-white'
 									: 'text-white/90 hover:bg-white/10'
 							}`}
 						>
