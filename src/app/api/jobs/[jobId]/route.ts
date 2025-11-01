@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getForwardedCookies, hasAuthCookies, unauthorizedResponse } from '@/lib/api-auth-helpers'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
@@ -116,7 +117,28 @@ export async function PUT(req: NextRequest) {
                 { status: 400 }
             )
         }
-		return proxyRequest(req, `/jobs/${jobId}`, 'PUT', body)
+		const response = await proxyRequest(req, `/jobs/${jobId}`, 'PUT', body)
+		
+		// If update was successful, trigger on-demand revalidation
+		if (response.ok) {
+			try {
+				revalidatePath(`/jobs/${jobId}`)
+				revalidateTag(`job-${jobId}`)
+				revalidatePath('/jobs')
+				revalidatePath('/employer/jobs')
+				
+				const subdomain = getSubdomainFromRequest(req)
+				if (subdomain) {
+					revalidatePath(`/_subdomain/${subdomain}/careers`)
+				}
+				
+				console.log(`[Revalidation] Successfully revalidated job ${jobId} after update`)
+			} catch (revalidateError) {
+				console.error('[Revalidation] Error:', revalidateError)
+			}
+		}
+		
+		return response
 	} catch (error) {
 		console.error('[Jobs API] Error parsing request body:', error)
 		return NextResponse.json(
@@ -134,7 +156,28 @@ export async function DELETE(req: NextRequest) {
             { status: 400 }
         )
     }
-	return proxyRequest(req, `/jobs/${jobId}`, 'DELETE')
+	const response = await proxyRequest(req, `/jobs/${jobId}`, 'DELETE')
+	
+	// If deletion was successful, trigger revalidation
+	if (response.ok) {
+		try {
+			revalidatePath(`/jobs/${jobId}`)
+			revalidateTag(`job-${jobId}`)
+			revalidatePath('/jobs')
+			revalidatePath('/employer/jobs')
+			
+			const subdomain = getSubdomainFromRequest(req)
+			if (subdomain) {
+				revalidatePath(`/_subdomain/${subdomain}/careers`)
+			}
+			
+			console.log(`[Revalidation] Successfully revalidated after deleting job ${jobId}`)
+		} catch (revalidateError) {
+			console.error('[Revalidation] Error:', revalidateError)
+		}
+	}
+	
+	return response
 }
 
 

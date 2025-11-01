@@ -50,7 +50,12 @@ async function fetchPublicJob (jobId: string, origin: string)
 	} catch {}
 	const qp = subdomain ? `?subdomain=${encodeURIComponent(subdomain)}` : ''
 	const url = `${origin}/api/jobs/public/${jobId}${qp}`
-	const res = await fetch(url, { next: { revalidate: 30 } })
+	const res = await fetch(url, { 
+		next: { 
+			revalidate: 3600, // Cache for 1 hour - will be revalidated on-demand when job updates
+			tags: [`job-${jobId}`] // Tag for targeted revalidation
+		}
+	})
 	if (!res.ok) {
 		console.log('Failed to load job', res.statusText)
 		return { success: false, data: null }
@@ -81,21 +86,45 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 	const logoUrl = company?.logoUrl || '/vercel.svg'
 	const companyDescription = company?.companyDescription || company?.company_description
 
+	// Helper function to format text (handles both array and string formats)
+	const formatTextContent = (content: unknown): string => {
+		if (!content) return ''
+		
+		// If it's an array, join with line breaks
+		if (Array.isArray(content)) {
+			return content
+				.map(item => `• ${String(item).trim()}`)
+				.join('<br/>')
+		}
+		
+		// If it's a string, replace newlines with <br/>
+		const strContent = String(content)
+		
+		// Check if it looks like a JSON array string
+		if (strContent.startsWith('[') && strContent.endsWith(']')) {
+			try {
+				const parsed = JSON.parse(strContent)
+				if (Array.isArray(parsed)) {
+					return parsed
+						.map(item => `• ${String(item).trim()}`)
+						.join('<br/>')
+				}
+			} catch {
+				// If parsing fails, treat as regular string
+			}
+		}
+		
+		// Regular string - replace newlines with <br/>
+		return strContent.replace(/\n/g, '<br/>')
+	}
+
 	// Ensure job description renders even when only plain text is provided
     const rawDescription = jobData.jobDescriptionHtml || jobData.jobDescription || jobData.job_description || ''
-	const descriptionHtml = typeof rawDescription === 'string' ? rawDescription.replace(/\n/g, '<br/>') : ''
+	const descriptionHtml = formatTextContent(rawDescription)
 
-    const keyResponsibilitiesHtml = (jobData.keyResponsibilities || '')
-        ? String(jobData.keyResponsibilities).replace(/\n/g, '<br/>')
-		: ''
-
-    const requirementsHtml = (jobData.requirementsQualifications || '')
-        ? String(jobData.requirementsQualifications).replace(/\n/g, '<br/>')
-		: ''
-
-    const benefitsHtml = (jobData.benefitsPerks || '')
-        ? String(jobData.benefitsPerks).replace(/\n/g, '<br/>')
-		: ''
+    const keyResponsibilitiesHtml = formatTextContent(jobData.keyResponsibilities)
+    const requirementsHtml = formatTextContent(jobData.requirementsQualifications)
+    const benefitsHtml = formatTextContent(jobData.benefitsPerks)
 
 	function formatDate (iso?: string): string
 	{
@@ -120,10 +149,10 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 
 	return (
 		<main className="min-h-screen relative overflow-hidden bg-white">
-			{/* Dark Theme Background */}
-			{/* <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-700 to-gray-800" /> */}
-			
-			{/* Subtle Pattern Overlay with Branding Colors */}
+				{/* Dark Theme Background */}
+				{/* <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-700 to-gray-800" /> */}
+				
+				{/* Subtle Pattern Overlay with Branding Colors */}
 			<div className="absolute inset-0 opacity-10">
 				<div className="absolute inset-0 bg-gradient-to-r from-transparent transform -skew-y-12" style={{ background: `linear-gradient(to right, transparent, ${primaryColor}05, transparent)` }} />
 				<div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl" style={{ background: `radial-gradient(circle, ${primaryColor}08, transparent)` }} />
@@ -192,7 +221,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</span>
 										{job?.experienceLevel && (
 											<span 
-												className="px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm border"
+												className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm border"
 												style={{ 
 													backgroundColor: `${primaryColor}20`,
 													borderColor: `${primaryColor}50`,
@@ -203,7 +232,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 											</span>
 										)}
 										<span 
-											className="px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm border"
+											className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium backdrop-blur-sm border"
 											style={{ 
 												backgroundColor: `${primaryColor}20`,
 												borderColor: `${primaryColor}50`,
@@ -212,15 +241,15 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										>
 											{job?.isRemote ? '🌍 Remote' : '🏢 On-site'}
 										</span>
-										{/* {typeof job?.acceptingApplications === 'boolean' && (
-											<span className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-												job.acceptingApplications 
-													? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-													: 'bg-red-500/20 text-red-300 border border-red-500/30'
+										{(typeof job?.acceptingApplications === 'boolean' || job?.isActive !== undefined) && (
+											<span className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium border backdrop-blur-sm ${
+												(job.acceptingApplications !== false && job.isActive !== false)
+													? 'bg-emerald-500/20 text-emerald-700 border-emerald-500/30' 
+													: 'bg-red-500/20 text-red-700 border-red-500/30'
 											}`}>
-												{job.acceptingApplications ? '✅ Open' : '❌ Closed'}
+												{(job.acceptingApplications !== false && job.isActive !== false) ? '✅ Active' : '❌ Closed'}
 											</span>
-										)} */}
+										)}
 									</div>
 								</div>
 
@@ -333,7 +362,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 											</svg>
 										</div>
-										<h2 className="text-xl sm:text-2xl font-bold">Key Responsibilities</h2>
+										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Key Responsibilities</h2>
 									</div>
 									<div className="prose prose-lg max-w-none text-gray-700">
 										<div dangerouslySetInnerHTML={{ __html: keyResponsibilitiesHtml }} />
@@ -490,6 +519,40 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</div>
 									</div>
 								)}
+
+								{/* Application Status */}
+								<div className="flex items-start gap-3">
+									<div 
+										className="w-8 h-8 rounded-xl flex items-center justify-center mt-0.5"
+										style={{ 
+											backgroundColor: (job?.acceptingApplications !== false && job?.isActive !== false) 
+												? '#10b98115' 
+												: '#ef444415'
+										}}
+									>
+										<svg 
+											className="w-4 h-4" 
+											fill="none" 
+											stroke={(job?.acceptingApplications !== false && job?.isActive !== false) ? '#10b981' : '#ef4444'} 
+											viewBox="0 0 24 24"
+										>
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+										</svg>
+									</div>
+									<div>
+										<p className="text-sm font-medium text-gray-600">Application Status</p>
+										<p className={`text-base font-semibold ${
+											(job?.acceptingApplications !== false && job?.isActive !== false)
+												? 'text-emerald-700'
+												: 'text-red-700'
+										}`}>
+											{(job?.acceptingApplications !== false && job?.isActive !== false) 
+												? 'Accepting Applications' 
+												: 'Applications Closed'
+											}
+										</p>
+									</div>
+								</div>
 							</div>
 
 							{/* Apply Button - Mobile/Tablet */}
@@ -499,6 +562,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 									jobTitle={job?.jobTitle || job?.job_title || ''}
 									companyName={company?.companyName || company?.name}
 									primaryColor={primaryColor}
+									isAcceptingApplications={job?.acceptingApplications !== false && job?.isActive !== false}
 									className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg"
 								/>
 							</div>

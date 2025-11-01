@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { getForwardedCookies, hasAuthCookies, unauthorizedResponse } from '@/lib/api-auth-helpers'
 import { getSubdomainFromRequest } from '@/lib/subdomain-utils'
 
@@ -115,7 +116,26 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json()
-		return proxyRequest(req, '/jobs', 'POST', body)
+		const response = await proxyRequest(req, '/jobs', 'POST', body)
+		
+		// If job creation was successful, trigger revalidation
+		if (response.ok) {
+			try {
+				revalidatePath('/jobs')
+				revalidatePath('/employer/jobs')
+				
+				const subdomain = req.headers.get('X-Company-Subdomain') || getSubdomainFromRequest(req)
+				if (subdomain) {
+					revalidatePath(`/_subdomain/${subdomain}/careers`)
+				}
+				
+				console.log('[Revalidation] Successfully revalidated after creating new job')
+			} catch (revalidateError) {
+				console.error('[Revalidation] Error:', revalidateError)
+			}
+		}
+		
+		return response
 	} catch (error) {
 		console.error('[Jobs API] Error parsing request body:', error)
 		return NextResponse.json(

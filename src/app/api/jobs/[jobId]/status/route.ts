@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getForwardedCookies, hasAuthCookies, unauthorizedResponse } from '@/lib/api-auth-helpers'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
@@ -102,7 +103,33 @@ export async function PATCH(
                 { status: 400 }
             )
         }
-		return proxyRequest(req, `/jobs/${jobId}/status`, 'PATCH', body)
+		const response = await proxyRequest(req, `/jobs/${jobId}/status`, 'PATCH', body)
+		
+		// If status update was successful, trigger on-demand revalidation
+		if (response.ok) {
+			try {
+				// Revalidate the specific job page
+				revalidatePath(`/jobs/${jobId}`)
+				revalidateTag(`job-${jobId}`)
+				
+				// Revalidate jobs list pages
+				revalidatePath('/jobs')
+				revalidatePath('/employer/jobs')
+				
+				// Revalidate subdomain career page if applicable
+				const subdomain = getSubdomainFromRequest(req)
+				if (subdomain) {
+					revalidatePath(`/_subdomain/${subdomain}/careers`)
+				}
+				
+				console.log(`[Revalidation] Successfully revalidated job ${jobId}`)
+			} catch (revalidateError) {
+				// Log error but don't fail the request
+				console.error('[Revalidation] Error:', revalidateError)
+			}
+		}
+		
+		return response
 	} catch (error) {
 		console.error('[Jobs API] Error parsing request body:', error)
 		return NextResponse.json(
