@@ -46,11 +46,11 @@ export default function EmployerNavbar() {
 								Jobs
 							</Link>
 							<Link 
-								href="/employer/candidates" 
+								href="/careers" 
 								className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
 							>
 								<Users className="w-4 h-4" />
-								Candidates
+								Careers
 							</Link>
 							<Link 
 								href="/employer/settings" 
@@ -88,11 +88,11 @@ export default function EmployerNavbar() {
 							Jobs
 						</Link>
 						<Link 
-							href="/employer/candidates" 
+							href="/careers" 
 							className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
 						>
 							<Users className="w-4 h-4" />
-							Candidates
+							Careers
 						</Link>
 						<Link 
 							href="/employer/settings" 

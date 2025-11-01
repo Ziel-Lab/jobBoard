@@ -49,23 +49,15 @@ function LoginForm() {
 
       const res = await authLogin({ email, password }) as LoginResponse
       
-      // Extract auth data from response
-      const accessToken = res?.session?.access_token || res?.accessToken
-      const expiresAt = res?.session?.expires_at || res?.expiresAt
-      const userId = res?.session?.user_id || res?.userId
+      // Backend sets tokens as HttpOnly cookies automatically, so we don't need to handle them client-side
+      // Extract only non-sensitive metadata for UI state management
+      const expiresAt = res?.session?.expires_at
+      const userId = res?.profile?.id
       const subdomain = res?.subdomain
-      
-      if (!accessToken) {
-        throw new Error('No access token received')
-      }
 
-      // Do NOT store access tokens in localStorage. Server sets an HttpOnly cookie.
-      // Persist only non-sensitive client metadata (expires_at, user_id, subdomain).
+      // Store only non-sensitive client metadata (expires_at, user_id, subdomain) for UI routing
+      // The access token is stored as HttpOnly cookie by the backend and sent automatically with requests
       setAccessToken(undefined, expiresAt, userId, subdomain)
-      
-      // Add small delay to ensure cookie is set by the browser
-      // The login API route sets an HttpOnly cookie that the middleware checks
-      await new Promise(resolve => setTimeout(resolve, 100))
       
       // Handle redirect based on response
       // Check multiple conditions to determine if onboarding is needed

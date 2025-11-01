@@ -84,26 +84,15 @@ function VerifyEmailContent() {
 			const res = await authVerifyEmail({ access_token, refresh_token, type: 'signup' })
 			console.log('Verify email response:', res)
 			
-			// Store session tokens - user is now logged in
-			// Handle different response formats: session.access_token or direct accessToken
-			const accessTokenFromResponse = res?.session?.access_token || res?.accessToken || res?.access_token
-			// refresh token returned by backend (not persisted client-side)
+			// Backend sets tokens as HttpOnly cookies automatically during verification
+			// Extract only non-sensitive metadata for UI state management
+			const expiresAt = res?.session?.expires_at
+			const userId = res?.profile?.id || undefined
+			const subdomain = res?.subdomain || undefined
 			
-			if (accessTokenFromResponse) {
-				// Do NOT store access tokens in localStorage. The server sets an HttpOnly cookie
-				// with the session access token during verification. Persist only non-sensitive
-				// metadata (user id / subdomain) via setAccessToken which no longer stores tokens.
-				setAccessToken(
-					accessTokenFromResponse,
-					res?.session?.expires_at || undefined,
-					res?.user?.id || undefined,
-					res?.subdomain || undefined
-				)
-			} else {
-				console.warn('No access token returned from backend; relying on tokens from URL fragment for this flow')
-				// Fallback: do not persist tokens client-side. We keep minimal metadata only.
-				setAccessToken()
-			}
+			// Store only non-sensitive client metadata (expires_at, user_id, subdomain) for UI routing
+			// The access token is stored as HttpOnly cookie by the backend and sent automatically with requests
+			setAccessToken(undefined, expiresAt, userId, subdomain)
 			
 			setSuccess(true)
 			

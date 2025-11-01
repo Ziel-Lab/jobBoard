@@ -58,8 +58,9 @@ export class AuthenticatedApiClient {
       })
 
       if (!response.ok) {
+        // Backend auto-refreshes tokens, so 401 usually means refresh failed
         if (response.status === 401) {
-          console.error('[API] 401 Unauthorized on GET', endpoint)
+          console.error('[API] 401 Unauthorized on GET', endpoint, '- token refresh likely failed')
           handleAuthError({ status: response.status } as ApiError)
           return { data: null as T, success: false }
         }

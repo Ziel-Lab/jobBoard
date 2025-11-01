@@ -97,10 +97,14 @@ export interface ApiError extends Error {
 
 export function handleAuthError(error: ApiError) {
   // Check for 401/403 errors
+  // Backend auto-refreshes tokens, so 401 usually means refresh failed - redirect to login
   if (error?.response?.status === 401 || error?.response?.status === 403 || 
       error?.status === 401 || error?.status === 403) {
     clearAuth()
-    window.location.href = '/login'
+    // Redirect to login when authentication fails (refresh token expired or invalid)
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
     return
   }
   

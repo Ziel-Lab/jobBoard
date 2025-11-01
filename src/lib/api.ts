@@ -5,24 +5,39 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 // Use Next.js proxy routes on the same origin to avoid CORS in the browser.
 const API_BASE_PATH = '/api'
 
-async function request<T>(path: string, options?: { method?: HttpMethod; body?: unknown; token?: string }) {
-	const { method = 'GET', body, token } = options || {}
+async function request<T>(path: string, options?: { method?: HttpMethod; body?: unknown }) {
+	const { method = 'GET', body } = options || {}
 	const url = `${API_BASE_PATH}${path}`
 	const headers: Record<string, string> = {}
 	// Only set JSON content-type when sending a JSON body
 	if (body && !(body instanceof FormData)) {
 		headers['Content-Type'] = 'application/json'
 	}
-	if (token) headers['Authorization'] = `Bearer ${token}`
+	// Backend uses HttpOnly cookies for authentication, so no Authorization header needed
+	// Cookies are automatically sent with credentials: 'include'
 
 	const res = await fetch(url, {
 		method,
 		headers,
-		credentials: 'include',
+		credentials: 'include', // Include cookies (HttpOnly tokens) with all requests
 		...(body ? { body: JSON.stringify(body) } : {}),
 	})
 
 	if (!res.ok) {
+		// Handle 401 Unauthorized - backend auto-refreshes tokens, so 401 usually means refresh failed
+		if (res.status === 401) {
+			// Clear client-side auth metadata and redirect to login
+			if (typeof window !== 'undefined') {
+				try {
+					localStorage.removeItem('expires_at')
+					localStorage.removeItem('user_id')
+					localStorage.removeItem('subdomain')
+				} catch {}
+				window.location.href = '/login'
+				return undefined as unknown as T // Return early to prevent further processing
+			}
+		}
+		
 		let message = 'Request failed'
 		try {
 			const data = (await res.json()) as { message?: string; error?: string }
@@ -95,8 +110,9 @@ export function authAcceptInvitation(payload: {
 	return request<LoginResponse>('/auth/accept-invitation', { method: 'POST', body: payload })
 }
 
-export function teamInvite(payload: { email: string; role: string }, token: string) {
-	return request<void>('/team/invite', { method: 'POST', body: payload, token })
+export function teamInvite(payload: { email: string; role: string }) {
+	// Backend uses HttpOnly cookies for authentication, no token parameter needed
+	return request<void>('/team/invite', { method: 'POST', body: payload })
 }
 
 export function healthLive() {

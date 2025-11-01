@@ -77,6 +77,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
     console.log('job', jobData)
     const company: CompanyInfo | undefined = jobData.company
 	const primaryColor = company?.branding?.primaryColor || '#0b1220'
+	const secondaryColor = company?.branding?.secondaryColor || primaryColor
 	const logoUrl = company?.logoUrl || '/vercel.svg'
 	const companyDescription = company?.companyDescription || company?.company_description
 
@@ -118,23 +119,23 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 	}
 
 	return (
-		<main className="min-h-screen relative overflow-hidden bg-black">
+		<main className="min-h-screen relative overflow-hidden bg-white">
 			{/* Dark Theme Background */}
 			{/* <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-700 to-gray-800" /> */}
 			
-			{/* Subtle Pattern Overlay */}
-			<div className="absolute inset-0 opacity-20">
-				<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-y-12" />
-				<div className="absolute top-0 right-0 w-96 h-96 bg-gradient-radial from-white/5 to-transparent rounded-full blur-3xl" />
-				<div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-radial from-white/3 to-transparent rounded-full blur-3xl" />
+			{/* Subtle Pattern Overlay with Branding Colors */}
+			<div className="absolute inset-0 opacity-10">
+				<div className="absolute inset-0 bg-gradient-to-r from-transparent transform -skew-y-12" style={{ background: `linear-gradient(to right, transparent, ${primaryColor}05, transparent)` }} />
+				<div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl" style={{ background: `radial-gradient(circle, ${primaryColor}08, transparent)` }} />
+				<div className="absolute bottom-0 left-0 w-96 h-96 rounded-full blur-3xl" style={{ background: `radial-gradient(circle, ${secondaryColor}05, transparent)` }} />
 			</div>
 
-			<section className="relative z-10 mx-auto w-full max-w-6xl px-3 sm:px-6 lg:px-8 pt-4 sm:pt-16 pb-16 text-white">
+			<section className="relative z-10 mx-auto w-full max-w-6xl px-3 sm:px-6 lg:px-8 pt-4 sm:pt-16 pb-16 text-gray-900">
 				{/* Modern Header Section */}
 				<header className="mb-4 sm:mb-12 transform hover:scale-[1.01] transition-transform duration-300">
-					<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-md bg-white/5 shadow-xl hover:shadow-2xl transition-shadow duration-300">
+					<div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border shadow-xl hover:shadow-2xl transition-shadow duration-300 bg-gradient-to-br" style={{ borderColor: `${primaryColor}20`, background: `linear-gradient(to bottom right, ${primaryColor}05, ${secondaryColor}03, white)` }}>
 						{/* Header gradient overlay */}
-						<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+						<div className="absolute inset-0" style={{ background: `linear-gradient(to right, transparent, ${primaryColor}08, transparent)` }} />
 						
 						<div className="relative p-4 sm:p-8">
 							<div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -150,14 +151,14 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 												className="w-full h-full object-contain p-2 transition-transform duration-300 hover:scale-110" 
 											/>
 										</div>
-										<div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white shadow-md animate-pulse" />
+										<div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white shadow-md animate-pulse" style={{ backgroundColor: primaryColor }} />
 									</div>
 
 								</div>
 
 								{/* Job Info */}
 								<div className="flex-1 min-w-0 mt-4 sm:mt-0">
-									<h1 className="text-xl sm:text-3xl lg:text-4xl font-bold mb-2 leading-tight">
+									<h1 className="text-xl sm:text-3xl lg:text-4xl font-bold mb-2 leading-tight" style={{ color: primaryColor }}>
 										{job?.jobTitle || job?.job_title}
 									</h1>
 									{company?.websiteUrl ? (
@@ -165,13 +166,14 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 											href={company.websiteUrl}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="inline-flex items-center gap-2 text-base sm:text-lg text-white/70 hover:text-white transition-colors duration-200 group mb-4"
+											className="inline-flex items-center gap-2 text-base sm:text-lg text-gray-600 hover:text-gray-900 transition-colors duration-200 group mb-4"
+											style={{ color: secondaryColor }}
 										>
 											<span>{company?.companyName || company?.name}</span>
 											<IoGlobeOutline className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
 										</a>
 									) : (
-										<p className="text-base sm:text-lg text-white/70 mb-4">
+										<p className="text-base sm:text-lg mb-4" style={{ color: secondaryColor }}>
 											{company?.companyName || company?.name}
 										</p>
 									)}
@@ -244,41 +246,41 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 					<article className="lg:col-span-2 space-y-4 sm:space-y-8">
 						{/* Company Description */}
 						{companyDescription && (
-							<section className="rounded-2xl sm:rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden transform hover:scale-[1.01] transition-all duration-300 hover:shadow-xl">
+							<section className="rounded-2xl sm:rounded-3xl border overflow-hidden transform hover:scale-[1.01] transition-all duration-300 hover:shadow-xl bg-gradient-to-br" style={{ borderColor: `${primaryColor}20`, background: `linear-gradient(to bottom right, ${primaryColor}03, white)` }}>
 								<div className="p-4 sm:p-8">
 									<div className="flex items-center gap-3 mb-6">
 										<div 
 											className="w-10 h-10 rounded-2xl flex items-center justify-center transform hover:rotate-12 transition-transform duration-300"
-											style={{ backgroundColor: `${primaryColor}20` }}
+											style={{ backgroundColor: `${primaryColor}15` }}
 										>
 											<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
 											</svg>
 										</div>
-										<h2 className="text-xl sm:text-2xl font-bold">About {company.companyName}</h2>
+										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>About {company.companyName}</h2>
 									</div>
-									<div className="prose prose-lg prose-invert max-w-none">
-										<p className="text-white/80">{companyDescription}</p>
+									<div className="prose prose-lg max-w-none">
+										<p className="text-gray-700">{companyDescription}</p>
 									</div>
 								</div>
 							</section>
 						)}
 
 						{/* Job Description */}
-						<section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden transform hover:scale-[1.01] transition-all duration-300 hover:shadow-xl">
+						<section className="rounded-3xl border overflow-hidden transform hover:scale-[1.01] transition-all duration-300 hover:shadow-xl bg-gradient-to-br" style={{ borderColor: `${primaryColor}20`, background: `linear-gradient(to bottom right, ${primaryColor}03, white)` }}>
 							<div className="p-6 sm:p-8">
 								<div className="flex items-center gap-3 mb-6">
 									<div 
 										className="w-10 h-10 rounded-2xl flex items-center justify-center transform hover:rotate-12 transition-transform duration-300"
-										style={{ backgroundColor: `${primaryColor}20` }}
+										style={{ backgroundColor: `${primaryColor}15` }}
 									>
 										<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 										</svg>
 									</div>
-									<h2 className="text-xl sm:text-2xl font-bold">About the Role</h2>
+									<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>About the Role</h2>
 								</div>
-								<div className="prose prose-lg prose-invert max-w-none">
+								<div className="prose prose-lg max-w-none text-gray-700">
 									<div dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
 								</div>
 							</div>
@@ -286,26 +288,26 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 						
 						{/* Required Skills */}
 						{Array.isArray(job?.requiredSkills) && job.requiredSkills.length > 0 && (
-							<section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
+							<section className="rounded-3xl border overflow-hidden bg-gradient-to-br" style={{ borderColor: `${primaryColor}20`, background: `linear-gradient(to bottom right, ${primaryColor}03, white)` }}>
 								<div className="p-6 sm:p-8">
 									<div className="flex items-center gap-3 mb-6">
 										<div 
 											className="w-10 h-10 rounded-2xl flex items-center justify-center"
-											style={{ backgroundColor: `${primaryColor}20` }}
+											style={{ backgroundColor: `${primaryColor}15` }}
 										>
 											<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
 											</svg>
 										</div>
-										<h2 className="text-xl sm:text-2xl font-bold">Required Skills</h2>
+										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Required Skills</h2>
 									</div>
 									<div className="flex flex-wrap gap-3">
 										{job.requiredSkills.map((skill: string) => (
 											<span 
 												key={skill} 
-												className="px-4 py-2 rounded-2xl text-sm font-medium backdrop-blur-sm border hover:scale-105 transition-transform duration-200"
+												className="px-4 py-2 rounded-2xl text-sm font-medium border hover:scale-105 transition-transform duration-200"
 												style={{ 
-													backgroundColor: `${primaryColor}15`,
+													backgroundColor: `${primaryColor}10`,
 													borderColor: `${primaryColor}30`,
 													color: primaryColor
 												}}
@@ -320,12 +322,12 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 
 						{/* Key Responsibilities */}
 						{keyResponsibilitiesHtml && (
-							<section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
+							<section className="rounded-3xl border overflow-hidden bg-gradient-to-br" style={{ borderColor: `${primaryColor}20`, background: `linear-gradient(to bottom right, ${primaryColor}03, white)` }}>
 								<div className="p-6 sm:p-8">
 									<div className="flex items-center gap-3 mb-6">
 										<div 
 											className="w-10 h-10 rounded-2xl flex items-center justify-center"
-											style={{ backgroundColor: `${primaryColor}20` }}
+											style={{ backgroundColor: `${primaryColor}15` }}
 										>
 											<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -333,7 +335,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</div>
 										<h2 className="text-xl sm:text-2xl font-bold">Key Responsibilities</h2>
 									</div>
-									<div className="prose prose-lg prose-invert max-w-none">
+									<div className="prose prose-lg max-w-none text-gray-700">
 										<div dangerouslySetInnerHTML={{ __html: keyResponsibilitiesHtml }} />
 									</div>
 								</div>
@@ -342,20 +344,20 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 
 						{/* Requirements */}
 						{requirementsHtml && (
-							<section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
+							<section className="rounded-3xl border overflow-hidden bg-gradient-to-br" style={{ borderColor: `${secondaryColor}20`, background: `linear-gradient(to bottom right, ${secondaryColor}03, white)` }}>
 								<div className="p-6 sm:p-8">
 									<div className="flex items-center gap-3 mb-6">
 										<div 
 											className="w-10 h-10 rounded-2xl flex items-center justify-center"
-											style={{ backgroundColor: `${primaryColor}20` }}
+											style={{ backgroundColor: `${primaryColor}15` }}
 										>
 											<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
 											</svg>
 										</div>
-										<h2 className="text-xl sm:text-2xl font-bold">Requirements & Qualifications</h2>
+										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Requirements & Qualifications</h2>
 									</div>
-									<div className="prose prose-lg prose-invert max-w-none">
+									<div className="prose prose-lg max-w-none text-gray-700">
 										<div dangerouslySetInnerHTML={{ __html: requirementsHtml }} />
 									</div>
 								</div>
@@ -364,20 +366,20 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 
 						{/* Benefits */}
 						{benefitsHtml && (
-							<section className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
+							<section className="rounded-3xl border overflow-hidden bg-gradient-to-br" style={{ borderColor: `${primaryColor}20`, background: `linear-gradient(to bottom right, ${secondaryColor}03, white)` }}>
 								<div className="p-6 sm:p-8">
 									<div className="flex items-center gap-3 mb-6">
 										<div 
 											className="w-10 h-10 rounded-2xl flex items-center justify-center"
-											style={{ backgroundColor: `${primaryColor}20` }}
+											style={{ backgroundColor: `${primaryColor}15` }}
 										>
 											<svg className="w-5 h-5" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
 											</svg>
 										</div>
-										<h2 className="text-xl sm:text-2xl font-bold">Benefits & Perks</h2>
+										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Benefits & Perks</h2>
 									</div>
-									<div className="prose prose-lg prose-invert max-w-none">
+									<div className="prose prose-lg max-w-none text-gray-700">
 										<div dangerouslySetInnerHTML={{ __html: benefitsHtml }} />
 									</div>
 								</div>
@@ -388,16 +390,16 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 					</article>
 
 					{/* Sidebar */}
-					<aside className="rounded-2xl sm:rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden h-fit sticky top-4 sm:top-8">
+					<aside className="rounded-2xl sm:rounded-3xl border overflow-hidden h-fit sticky top-4 sm:top-8 bg-gradient-to-br shadow-lg" style={{ borderColor: `${primaryColor}20`, background: `linear-gradient(to bottom right, ${primaryColor}03, white)` }}>
 						<div className="p-4 sm:p-8 space-y-4 sm:space-y-6">
-							<h3 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Job Details</h3>
+							<h3 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6" style={{ color: primaryColor }}>Job Details</h3>
 							
 							{/* Job Details */}
 							<div className="space-y-5">
 								<div className="flex items-start gap-3">
 									<div 
 										className="w-8 h-8 rounded-xl flex items-center justify-center mt-0.5"
-										style={{ backgroundColor: `${primaryColor}20` }}
+										style={{ backgroundColor: `${primaryColor}15` }}
 									>
 										<svg className="w-4 h-4" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -405,68 +407,68 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</svg>
 									</div>
 									<div>
-										<p className="text-sm font-medium text-white/70">Location</p>
-										<p className="text-base font-semibold">{job?.officeLocation || job?.location || 'Not specified'}</p>
+										<p className="text-sm font-medium text-gray-600">Location</p>
+										<p className="text-base font-semibold text-gray-900">{job?.officeLocation || job?.location || 'Not specified'}</p>
 									</div>
 								</div>
 
 								<div className="flex items-start gap-3">
 									<div 
 										className="w-8 h-8 rounded-xl flex items-center justify-center mt-0.5"
-										style={{ backgroundColor: `${primaryColor}20` }}
+										style={{ backgroundColor: `${primaryColor}15` }}
 									>
 										<svg className="w-4 h-4" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 002 2V6a2 2 0 00-2-2z" />
 										</svg>
 									</div>
 									<div>
-										<p className="text-sm font-medium text-white/70">Employment Type</p>
-										<p className="text-base font-semibold">{formatEmploymentType(job?.employmentType)}</p>
+										<p className="text-sm font-medium text-gray-600">Employment Type</p>
+										<p className="text-base font-semibold text-gray-900">{formatEmploymentType(job?.employmentType)}</p>
 									</div>
 								</div>
 
 								<div className="flex items-start gap-3">
 									<div 
 										className="w-8 h-8 rounded-xl flex items-center justify-center mt-0.5"
-										style={{ backgroundColor: `${primaryColor}20` }}
+										style={{ backgroundColor: `${primaryColor}15` }}
 									>
 										<svg className="w-4 h-4" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
 										</svg>
 									</div>
 									<div>
-										<p className="text-sm font-medium text-white/70">Experience Level</p>
-										<p className="text-base font-semibold">{job?.experienceLevel || 'Not specified'}</p>
+										<p className="text-sm font-medium text-gray-600">Experience Level</p>
+										<p className="text-base font-semibold text-gray-900">{job?.experienceLevel || 'Not specified'}</p>
 									</div>
 								</div>
 
 								<div className="flex items-start gap-3">
 									<div 
 										className="w-8 h-8 rounded-xl flex items-center justify-center mt-0.5"
-										style={{ backgroundColor: `${primaryColor}20` }}
+										style={{ backgroundColor: `${primaryColor}15` }}
 									>
 										<svg className="w-4 h-4" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
 										</svg>
 									</div>
 									<div>
-										<p className="text-sm font-medium text-white/70">Work Mode</p>
-										<p className="text-base font-semibold">{job?.isRemote ? 'Remote' : 'On-site'}</p>
+										<p className="text-sm font-medium text-gray-600">Work Mode</p>
+										<p className="text-base font-semibold text-gray-900">{job?.isRemote ? 'Remote' : 'On-site'}</p>
 									</div>
 								</div>
 
 								<div className="flex items-start gap-3">
 									<div 
 										className="w-8 h-8 rounded-xl flex items-center justify-center mt-0.5"
-										style={{ backgroundColor: `${primaryColor}20` }}
+										style={{ backgroundColor: `${primaryColor}15` }}
 									>
 										<svg className="w-4 h-4" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h6m-6 0l-2 13a2 2 0 002 2h6a2 2 0 002-2L16 7" />
 										</svg>
 									</div>
 									<div>
-										<p className="text-sm font-medium text-white/70">Application Deadline</p>
-										<p className="text-base font-semibold">{formatDate(job?.applicationDeadline)}</p>
+										<p className="text-sm font-medium text-gray-600">Application Deadline</p>
+										<p className="text-base font-semibold text-gray-900">{formatDate(job?.applicationDeadline)}</p>
 									</div>
 								</div>
 
@@ -474,15 +476,15 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 									<div className="flex items-start gap-3">
 										<div 
 											className="w-8 h-8 rounded-xl flex items-center justify-center mt-0.5"
-											style={{ backgroundColor: `${primaryColor}20` }}
+											style={{ backgroundColor: `${primaryColor}15` }}
 										>
 											<svg className="w-4 h-4" fill="none" stroke={primaryColor} viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
 											</svg>
 										</div>
 										<div>
-											<p className="text-sm font-medium text-white/70">Compensation</p>
-											<p className="text-base font-semibold">
+											<p className="text-sm font-medium text-gray-600">Compensation</p>
+											<p className="text-base font-semibold text-gray-900">
 												{job.currency || 'USD'} {job.minSalary?.toLocaleString()} - {job.maxSalary?.toLocaleString()}
 											</p>
 										</div>
@@ -491,7 +493,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 							</div>
 
 							{/* Apply Button - Mobile/Tablet */}
-							<div className="pt-6 border-t border-white/20">
+							<div className="pt-6 border-t" style={{ borderColor: `${primaryColor}20` }}>
 								<ApplyButton
 									jobId={job?.id || ''}
 									jobTitle={job?.jobTitle || job?.job_title || ''}
@@ -502,7 +504,7 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 							</div>
 
 							{/* Job Meta Info */}
-							<div className="pt-4 text-sm text-white/50 space-y-2 border-t border-white/20">
+							<div className="pt-4 text-sm space-y-2 border-t" style={{ borderColor: `${primaryColor}20`, color: `${primaryColor}70` }}>
 								<div className="flex items-center gap-2">
 									<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

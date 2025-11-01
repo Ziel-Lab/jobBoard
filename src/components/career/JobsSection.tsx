@@ -312,7 +312,7 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
               {paginatedJobs.map((job) => (
                 <div
                   key={job.id}
-                  className={`bg-white rounded-xl shadow-sm border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
+                  className={`bg-white rounded-xl shadow-sm border-2 transition-all duration-200 cursor-pointer hover:shadow-md overflow-hidden ${
                     selectedJob?.id === job.id 
                       ? 'border-blue-500 shadow-md' 
                       : 'border-gray-200 hover:border-gray-300'
@@ -321,43 +321,39 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                 >
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2 break-words">
                           {job.jobTitle}
                         </h3>
                         
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{job.officeLocation}</span>
+                          <div className="flex items-center gap-1 min-w-0">
+                            <MapPin className="w-4 h-4 flex-shrink-0" />
+                            <span className="break-words">{job.officeLocation}</span>
                             {job.isRemote && (
-                              <span className="ml-1 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
+                              <span className="ml-1 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full flex-shrink-0">
                                 Remote
                               </span>
                             )}
                           </div>
                           
                           <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
+                            <Users className="w-4 h-4 flex-shrink-0" />
                             <span>{getExperienceLevelText(job.experienceLevel)}</span>
                           </div>
                           
                           <div className="flex items-center gap-1">
-                            <Briefcase className="w-4 h-4" />
+                            <Briefcase className="w-4 h-4 flex-shrink-0" />
                             <span>{getEmploymentTypeText(job.employmentType)}</span>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-1 text-sm font-medium text-gray-900 mb-3">
-                          <DollarSign className="w-4 h-4" />
-                          <span>{formatSalary(job.minSalary, job.maxSalary, job.currency)}</span>
+                          <DollarSign className="w-4 h-4 flex-shrink-0" />
+                          <span className="break-words">{formatSalary(job.minSalary, job.maxSalary, job.currency)}</span>
                         </div>
                         
-                        <p className="text-gray-600 text-sm overflow-hidden" style={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical'
-                        }}>
+                        <p className="text-gray-600 text-sm break-words break-all overflow-hidden line-clamp-2 max-w-full">
                           {job.jobDescription}
                         </p>
                       </div>
@@ -444,68 +440,68 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
             </div>
 
             {/* Job Details */}
-            <div className="lg:sticky lg:top-8 lg:h-fit">
+            <div className="lg:sticky lg:top-8 lg:h-fit min-w-0 max-w-full">
               {selectedJob ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 overflow-hidden max-w-full">
                   <div className="mb-6">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2 break-words">
                       {selectedJob.jobTitle}
                     </h3>
                     
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{selectedJob.officeLocation}</span>
+                      <div className="flex items-center gap-1 min-w-0">
+                        <MapPin className="w-4 h-4 flex-shrink-0" />
+                        <span className="break-words">{selectedJob.officeLocation}</span>
                         {selectedJob.isRemote && (
-                          <span className="ml-1 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
+                          <span className="ml-1 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full flex-shrink-0">
                             Remote
                           </span>
                         )}
                       </div>
                       
                       <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
+                        <Users className="w-4 h-4 flex-shrink-0" />
                         <span>{getExperienceLevelText(selectedJob.experienceLevel)}</span>
                       </div>
                       
                       <div className="flex items-center gap-1">
-                        <Briefcase className="w-4 h-4" />
+                        <Briefcase className="w-4 h-4 flex-shrink-0" />
                         <span>{getEmploymentTypeText(selectedJob.employmentType)}</span>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-1 text-lg font-semibold text-gray-900 mb-4">
-                      <DollarSign className="w-5 h-5" />
-                      <span>{formatSalary(selectedJob.minSalary, selectedJob.maxSalary, selectedJob.currency)}</span>
+                      <DollarSign className="w-5 h-5 flex-shrink-0" />
+                      <span className="break-words">{formatSalary(selectedJob.minSalary, selectedJob.maxSalary, selectedJob.currency)}</span>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <div>
+                    <div className="overflow-hidden">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3">Job Description</h4>
-                      <p className="text-gray-600 leading-relaxed">
+                      <p className="text-gray-600 leading-relaxed break-words break-all max-w-full">
                         {selectedJob.jobDescription}
                       </p>
                     </div>
 
-                    <div>
+                    <div className="overflow-hidden">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3">Key Responsibilities</h4>
-                      <div className="text-gray-600 leading-relaxed whitespace-pre-line">
+                      <div className="text-gray-600 leading-relaxed whitespace-pre-line break-words break-all max-w-full">
                         {selectedJob.keyResponsibilities}
                       </div>
                     </div>
 
-                    <div>
+                    <div className="overflow-hidden">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3">Requirements & Qualifications</h4>
-                      <div className="text-gray-600 leading-relaxed whitespace-pre-line">
+                      <div className="text-gray-600 leading-relaxed whitespace-pre-line break-words break-all max-w-full">
                         {selectedJob.requirementsQualifications}
                       </div>
                     </div>
 
                     {selectedJob.benefitsPerks && (
-                      <div>
+                      <div className="overflow-hidden">
                         <h4 className="text-lg font-semibold text-gray-900 mb-3">Benefits & Perks</h4>
-                        <div className="text-gray-600 leading-relaxed whitespace-pre-line">
+                        <div className="text-gray-600 leading-relaxed whitespace-pre-line break-words break-all max-w-full">
                           {selectedJob.benefitsPerks}
                         </div>
                       </div>
@@ -517,7 +513,7 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                         {selectedJob.requiredSkills.map((skill, index) => (
                           <span
                             key={index}
-                            className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full"
+                            className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full break-words"
                           >
                             {skill}
                           </span>
