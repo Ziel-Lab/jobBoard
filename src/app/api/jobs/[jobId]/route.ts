@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAccessTokenFromRequest, unauthorizedResponse } from '@/lib/api-auth-helpers'
+import { getForwardedCookies, hasAuthCookies, unauthorizedResponse } from '@/lib/api-auth-helpers'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
 
@@ -33,16 +33,16 @@ async function proxyRequest(
 	body?: unknown
 ) {
 	try {
-		// Build headers and attach server-side token from HttpOnly cookie
-		const headers: Record<string, string> = {
-			'Content-Type': 'application/json'
-		}
-		// Read token via helper (cookies or Authorization fallback)
-		const accessToken = await getAccessTokenFromRequest(req)
-		if (!accessToken) {
+		// Check if auth cookies are present
+		if (!await hasAuthCookies()) {
 			return NextResponse.json(unauthorizedResponse(), { status: 401 })
 		}
-		headers['Authorization'] = `Bearer ${accessToken}`
+		
+		// Build headers - forward cookies to backend
+		const headers: Record<string, string> = {
+			'Content-Type': 'application/json',
+			'Cookie': await getForwardedCookies(), // ✅ Forward HttpOnly cookies to backend
+		}
 		
 		const subdomain = getSubdomainFromRequest(req)
 		if (subdomain) {
@@ -54,7 +54,6 @@ async function proxyRequest(
 		const options: RequestInit = {
 			method,
 			headers,
-			credentials: 'include',
 		}
 
 		if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
@@ -137,4 +136,5 @@ export async function DELETE(req: NextRequest) {
     }
 	return proxyRequest(req, `/jobs/${jobId}`, 'DELETE')
 }
+
 

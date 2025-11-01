@@ -27,6 +27,7 @@ import Image from 'next/image'
 import { api } from '@/lib/authenticated-api'
 import { IoArrowBackOutline } from "react-icons/io5";
 import EmployerNavbar from '@/components/ui/employer-navbar'
+import { LocationAutocomplete } from '@/components/jobs/location-autocomplete'
 
 // Validation schema for company settings
 const companySettingsSchema = z.object({
@@ -178,6 +179,7 @@ function CompanySettingsPage() {
 		setValue,
 		watch,
 		reset,
+		trigger,
 	} = useForm<CompanySettingsForm>({
 		resolver: zodResolver(companySettingsSchema),
 	})
@@ -713,24 +715,22 @@ function CompanySettingsPage() {
 									</div>
 
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-										<div>
+										<div className="relative z-[9998]">
 											<label className="block text-sm font-medium text-white/90 mb-2">
 												<span className="flex items-center gap-2">
 													<MapPin className="w-4 h-4" />
 													Location *
 												</span>
 											</label>
-											<input
-												{...register('location')}
-												className={getInputClasses(!!errors.location)}
+											<LocationAutocomplete
+												value={watch('location') || ''}
+												onChange={(value) => {
+													setValue('location', value)
+													trigger('location')
+												}}
 												placeholder="e.g., Remote, San Francisco, CA"
+												error={errors.location?.message}
 											/>
-											{errors.location && (
-												<p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-													<AlertCircle className="w-4 h-4" />
-													{errors.location.message}
-												</p>
-											)}
 										</div>
 
 										<div>

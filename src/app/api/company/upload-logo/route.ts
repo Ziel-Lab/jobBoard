@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAccessTokenFromRequest, unauthorizedResponse } from '@/lib/api-auth-helpers'
+import { getForwardedCookies, hasAuthCookies, unauthorizedResponse } from '@/lib/api-auth-helpers'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
 
 // POST upload company logo
 export async function POST(request: NextRequest) {
 	try {
-		// Get auth token from cookies or header
-		const accessToken = await getAccessTokenFromRequest(request)
-
-		if (!accessToken) {
+		// Check if auth cookies are present
+		if (!await hasAuthCookies()) {
 			return NextResponse.json(unauthorizedResponse(), { status: 401 })
 		}
 
@@ -45,17 +43,34 @@ export async function POST(request: NextRequest) {
 		const backendFormData = new FormData()
 		backendFormData.append('file', file, file.name)
 
-		// Upload to backend
-		const response = await fetch(`${API_BASE_URL}/company/upload-logo`, {
+		// Upload to backend - forward cookies
+		const backendUrl = `${API_BASE_URL}/company/upload-logo`
+		console.log('[Upload Logo] Uploading to backend:', backendUrl)
+		console.log('[Upload Logo] File details:', { name: file.name, size: file.size, type: file.type })
+		
+		// Build headers
+		const headers: Record<string, string> = {
+			'Cookie': await getForwardedCookies(), // ✅ Forward HttpOnly cookies to backend
+		}
+		
+		// Add subdomain if present (may be required by backend)
+		const subdomain = request.headers.get('X-Company-Subdomain')
+		if (subdomain) {
+			headers['X-Company-Subdomain'] = subdomain
+			console.log('[Upload Logo] Adding subdomain header:', subdomain)
+		}
+		
+		const response = await fetch(backendUrl, {
 			method: 'POST',
-			headers: {
-				'Authorization': `Bearer ${accessToken}`,
-			},
+			headers,
 			body: backendFormData,
 		})
 
+		console.log('[Upload Logo] Backend response status:', response.status)
+
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => ({}))
+			console.error('[Upload Logo] Backend error:', { status: response.status, error: errorData })
 			return NextResponse.json(
 				{
 					success: false,

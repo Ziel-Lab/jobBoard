@@ -28,32 +28,40 @@ export async function POST(req: NextRequest) {
 		// Create response with the login data
 		const response = NextResponse.json(data);
 
-		// Extract access token from session object
+		// Extract tokens from session object
 		const accessToken = data.session?.access_token;
+		const refreshToken = data.session?.refresh_token;
 
-		// Set the accessToken as an HttpOnly cookie for secure server-side access
+		// Set cookies as HttpOnly for secure server-side access
+		const cookieDomain = getCookieDomain(req);
+		const cookieOptions = {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'lax' as const,
+			maxAge: 60 * 60 * 24 * 7, // 7 days
+			path: '/',
+			domain: cookieDomain,
+		};
+
 		if (accessToken) {
-			const cookieDomain = getCookieDomain(req);
-			const cookieOptions = {
-				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production',
-				sameSite: 'lax' as const,
-				maxAge: 60 * 60 * 24 * 7, // 7 days
-				path: '/',
-				domain: cookieDomain,
-			};
-
 			console.log('[Login API] Setting accessToken cookie with domain:', cookieDomain);
 			response.cookies.set('accessToken', accessToken, cookieOptions);
-
-			// Also set user_id if available for middleware to use
-			const userId = data.user?.id;
-			if (userId) {
-				console.log('[Login API] Setting user_id cookie:', userId);
-				response.cookies.set('user_id', userId, cookieOptions);
-			}
 		} else {
 			console.warn('[Login API] No access token found in response');
+		}
+
+		if (refreshToken) {
+			console.log('[Login API] Setting refreshToken cookie');
+			response.cookies.set('refreshToken', refreshToken, cookieOptions);
+		} else {
+			console.warn('[Login API] No refresh token found in response');
+		}
+
+		// Also set user_id if available for middleware to use
+		const userId = data.user?.id;
+		if (userId) {
+			console.log('[Login API] Setting user_id cookie:', userId);
+			response.cookies.set('user_id', userId, cookieOptions);
 		}
 
 		return response;

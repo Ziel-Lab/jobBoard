@@ -1,4 +1,4 @@
-import { getAuthHeaders, handleAuthError, ApiError } from './auth-utils'
+import { handleAuthError, ApiError } from './auth-utils'
 import { getCurrentSubdomain } from '@/lib/subdomain-utils'
 
 export interface ApiResponse<T> {
@@ -23,11 +23,13 @@ export class AuthenticatedApiClient {
   }
 
   private buildHeaders(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'): HeadersInit {
-    const headers = { ...getAuthHeaders() } as Record<string, string>
-    // Avoid sending Content-Type on GET to prevent preflight on some backends
-    if (method === 'GET') {
-      delete headers['Content-Type']
+    const headers: Record<string, string> = {}
+    
+    // Only set Content-Type for non-GET requests
+    if (method !== 'GET') {
+      headers['Content-Type'] = 'application/json'
     }
+    
     const sub = getCurrentSubdomain()
     
     // If no subdomain detected from URL, try to get it from localStorage
@@ -175,7 +177,7 @@ export class AuthenticatedApiClient {
     }
   }
 
-  async uploadFile<T>(endpoint: string, file: File): Promise<ApiResponse<T>> {
+  async uploadFile<T>(endpoint: string, file: File, retryCount = 1): Promise<ApiResponse<T>> {
     try {
       const formData = new FormData()
       formData.append('file', file)
@@ -189,6 +191,13 @@ export class AuthenticatedApiClient {
         credentials: 'include',
         body: formData
       })
+
+      // Retry once on 404 (backend might be warming up)
+      if (response.status === 404 && retryCount > 0) {
+        console.log('[Upload] Got 404, retrying after 500ms...')
+        await new Promise(resolve => setTimeout(resolve, 500))
+        return this.uploadFile(endpoint, file, retryCount - 1)
+      }
 
       if (!response.ok) {
         if (response.status === 401) {

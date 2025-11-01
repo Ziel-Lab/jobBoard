@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAccessTokenFromRequest, unauthorizedResponse } from '@/lib/api-auth-helpers'
+import { getForwardedCookies, hasAuthCookies, unauthorizedResponse } from '@/lib/api-auth-helpers'
 import { getSubdomainFromRequest } from '@/lib/subdomain-utils'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
@@ -11,18 +11,17 @@ async function proxyRequest(
 	body?: unknown
 ) {
 	try {
-		// Build headers and attach server-side token from HttpOnly cookie
-		const headers: Record<string, string> = {
-			'Content-Type': 'application/json'
-		}
-		
-		// Read token via helper (cookies or Authorization fallback)
-		const accessToken = await getAccessTokenFromRequest(req)
-		if (!accessToken) {
-			console.error('[Jobs API Proxy] No access token found')
+		// Check if auth cookies are present
+		if (!await hasAuthCookies()) {
+			console.error('[Jobs API Proxy] No auth cookies found')
 			return NextResponse.json(unauthorizedResponse(), { status: 401 })
 		}
-		headers['Authorization'] = `Bearer ${accessToken}`
+		
+		// Build headers - forward cookies to backend
+		const headers: Record<string, string> = {
+			'Content-Type': 'application/json',
+			'Cookie': await getForwardedCookies(), // ✅ Forward HttpOnly cookies to backend
+		}
 		
 		// Get subdomain from request headers or URL
 		const subdomain = req.headers.get('X-Company-Subdomain') || getSubdomainFromRequest(req)
@@ -39,7 +38,6 @@ async function proxyRequest(
 		const options: RequestInit = {
 			method,
 			headers,
-			credentials: 'include',
 		}
 
 		if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {

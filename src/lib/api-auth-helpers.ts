@@ -2,47 +2,63 @@ import { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
 
 /**
- * Extract access token from Next.js API request
- * Checks both cookies (server-side, HttpOnly) and Authorization header (client-side)
+ * Forward authentication cookies from the incoming request to the backend.
+ * This properly handles HttpOnly cookies set by the backend without exposing them to JavaScript.
  * 
  * Usage in API routes:
  * ```ts
- * import { getAccessTokenFromRequest } from '@/lib/api-auth-helpers'
+ * import { getForwardedCookies, hasAuthCookies } from '@/lib/api-auth-helpers'
  * 
  * export async function GET(request: NextRequest) {
- *   const accessToken = await getAccessTokenFromRequest(request)
- *   if (!accessToken) {
+ *   if (!await hasAuthCookies()) {
  *     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
  *   }
- *   // Use accessToken...
+ *   
+ *   const response = await fetch(`${API_BASE_URL}/endpoint`, {
+ *     headers: {
+ *       'Cookie': await getForwardedCookies(),
+ *       // ... other headers
+ *     },
+ *   })
  * }
  * ```
  */
-export async function getAccessTokenFromRequest(request: NextRequest): Promise<string | null> {
-	console.log('[API Auth] Getting access token from request')
-	
-	// First, try to get from cookies (server-side, HttpOnly)
+
+/**
+ * Get cookies from the request as a Cookie header string to forward to backend.
+ * This allows the backend to read HttpOnly cookies directly.
+ */
+export async function getForwardedCookies(): Promise<string> {
 	const cookieStore = await cookies()
-	const tokenFromCookie = cookieStore.get('accessToken')?.value
-	
-	if (tokenFromCookie) {
-		console.log('[API Auth] Found access token in cookies')
-		return tokenFromCookie
-	}
-	
-	// Log all available cookies for debugging
 	const allCookies = cookieStore.getAll()
-	console.log('[API Auth] Available cookies:', allCookies.map(c => c.name).join(', '))
 	
-	// Fallback: try to get from Authorization header (client-side)
-	const authHeader = request.headers.get('Authorization')
-	if (authHeader && authHeader.startsWith('Bearer ')) {
-		console.log('[API Auth] Found access token in Authorization header')
-		return authHeader.substring(7)
+	// Format cookies as "name=value; name2=value2"
+	const cookieHeader = allCookies
+		.map(cookie => `${cookie.name}=${cookie.value}`)
+		.join('; ')
+	
+	console.log('[API Auth] Forwarding cookies:', allCookies.map(c => c.name).join(', '))
+	
+	return cookieHeader
+}
+
+/**
+ * Check if auth cookies (accessToken or refreshToken) are present.
+ * Use this to verify authentication before forwarding requests.
+ */
+export async function hasAuthCookies(): Promise<boolean> {
+	const cookieStore = await cookies()
+	const hasAccessToken = !!cookieStore.get('accessToken')?.value
+	const hasRefreshToken = !!cookieStore.get('refreshToken')?.value
+	
+	const authenticated = hasAccessToken || hasRefreshToken
+	
+	if (!authenticated) {
+		const allCookies = cookieStore.getAll()
+		console.log('[API Auth] No auth cookies found. Available cookies:', allCookies.map(c => c.name).join(', '))
 	}
 	
-	console.log('[API Auth] No access token found')
-	return null
+	return authenticated
 }
 
 /**

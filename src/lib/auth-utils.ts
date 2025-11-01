@@ -7,10 +7,19 @@ interface TokenData {
   subdomain?: string
 }
 
-export function setAccessToken(token?: string, expiresAt?: number, userId?: string, subdomain?: string) {
-  // Avoid storing access tokens in localStorage (security risk).
-  // Keep a minimal client-side metadata record (non-sensitive) to aid UI routing.
+/**
+ * Store non-sensitive client-side metadata after login.
+ * DO NOT pass access tokens here - they are stored as HttpOnly cookies by the backend.
+ * This only stores metadata needed for UI routing and state management.
+ */
+export function storeAuthMetadata(metadata: {
+  expiresAt?: number
+  userId?: string
+  subdomain?: string
+}) {
   if (typeof window === 'undefined') return
+
+  const { expiresAt, userId, subdomain } = metadata
 
   // Only store non-sensitive metadata. Do NOT persist the access token.
   if (expiresAt) {
@@ -34,38 +43,11 @@ export function setAccessToken(token?: string, expiresAt?: number, userId?: stri
   }
 }
 
-export function getAuthHeaders(): AuthHeaders {
-  const headers: AuthHeaders = { 'Content-Type': 'application/json' }
-
-  // We rely on HttpOnly cookies being sent with requests (credentials: 'include').
-  // Do NOT attach Authorization header by default since tokens aren't stored client-side.
-  // If callers have an explicit token (e.g., from a magic link flow) they should
-  // use `attachAuthHeader` helper below to add Authorization.
-
-  // Include known non-sensitive metadata (subdomain) when available for routing
-  if (typeof window !== 'undefined') {
-    try {
-      let sub = localStorage.getItem('subdomain')
-      
-      // For localhost development, use a default subdomain if none is found
-      if (!sub && window.location.hostname === 'localhost') {
-        sub = 'symb-technologies' // Default subdomain for localhost development
-      }
-      
-      if (sub) headers['X-Company-Subdomain'] = sub
-    } catch {}
-  }
-
-  return headers
-}
-
-// Helper to attach Authorization header when the caller explicitly provides a token.
-export function attachAuthHeader(headers: AuthHeaders, token?: string) {
-  if (!token) return headers
-  return {
-    ...headers,
-    Authorization: `Bearer ${token}`,
-  }
+/**
+ * @deprecated Use storeAuthMetadata instead. This function name is misleading.
+ */
+export function setAccessToken(token?: string, expiresAt?: number, userId?: string, subdomain?: string) {
+  storeAuthMetadata({ expiresAt, userId, subdomain })
 }
 
 export function isTokenExpired(): boolean {

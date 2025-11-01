@@ -1,27 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAccessTokenFromRequest, unauthorizedResponse } from '@/lib/api-auth-helpers'
+import { getForwardedCookies, hasAuthCookies, unauthorizedResponse } from '@/lib/api-auth-helpers'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:80/api'
 
 // GET company profile
 export async function GET(request: NextRequest) {
 	try {
-		// Log cookies for debugging
-		console.log('[Company Profile API] Cookies received:', request.cookies.getAll().map(c => `${c.name}=${c.value}`).join('; '))
-
-		// Get auth token from cookies or header
-		const accessToken = await getAccessTokenFromRequest(request)
-
-		if (!accessToken) {
-			console.warn('[Company Profile API] No access token found in request cookies or headers')
+		// Check if auth cookies are present
+		if (!await hasAuthCookies()) {
+			console.warn('[Company Profile API] No auth cookies found')
 			return NextResponse.json(unauthorizedResponse(), { status: 401 })
 		}
 
-		// Fetch company profile from backend
+		// Fetch company profile from backend - forward cookies
 		const response = await fetch(`${API_BASE_URL}/company/profile`, {
 			method: 'GET',
 			headers: {
-				'Authorization': `Bearer ${accessToken}`,
+				'Cookie': await getForwardedCookies(), // ✅ Forward HttpOnly cookies to backend
 				'Content-Type': 'application/json',
 			},
 		})
@@ -53,25 +48,20 @@ export async function GET(request: NextRequest) {
 // PUT update company profile
 export async function PUT(request: NextRequest) {
 	try {
-		// Log cookies for debugging
-		console.log('[Company Profile API] Cookies received:', request.cookies.getAll().map(c => `${c.name}=${c.value}`).join('; '))
-
-		// Get auth token from cookies or header
-		const accessToken = await getAccessTokenFromRequest(request)
-
-		if (!accessToken) {
-			console.warn('[Company Profile API] No access token found in request cookies or headers')
+		// Check if auth cookies are present
+		if (!await hasAuthCookies()) {
+			console.warn('[Company Profile API] No auth cookies found')
 			return NextResponse.json(unauthorizedResponse(), { status: 401 })
 		}
 
 		// Get request body
 		const body = await request.json()
 
-		// Update company profile in backend
+		// Update company profile in backend - forward cookies
 		const response = await fetch(`${API_BASE_URL}/company/profile`, {
 			method: 'PUT',
 			headers: {
-				'Authorization': `Bearer ${accessToken}`,
+				'Cookie': await getForwardedCookies(), // ✅ Forward HttpOnly cookies to backend
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify(body),

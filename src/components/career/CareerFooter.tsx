@@ -19,9 +19,9 @@ export default function CareerFooter({ company }: CareerFooterProps) {
           {/* Company Info */}
           <div className="lg:col-span-2">
             <h3 className="text-2xl font-bold mb-4">{company.companyName}</h3>
-            <p className="text-gray-300 mb-6 max-w-md">
+            {/* <p className="text-gray-300 mb-6 max-w-md">
               {company.companyDescription}
-            </p>
+            </p> */}
             
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-gray-300">
@@ -89,7 +89,7 @@ export default function CareerFooter({ company }: CareerFooterProps) {
         </div>
 
         <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 {company.companyName}. All rights reserved.</p>
+          {/* <p>&copy; 2024 {company.companyName}. All rights reserved.</p> */}
         </div>
       </div>
     </footer>

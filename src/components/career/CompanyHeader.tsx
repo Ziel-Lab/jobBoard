@@ -4,6 +4,7 @@ import React from 'react'
 import { Company } from '@/types/company'
 import Image from 'next/image'
 import { ExternalLink, MapPin, Users, Building2 } from 'lucide-react'
+import { PiBuildingsDuotone } from "react-icons/pi";
 
 interface CompanyHeaderProps {
   company: Company
@@ -35,7 +36,7 @@ export default function CompanyHeader({ company }: CompanyHeaderProps) {
         <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
           {/* Company Logo */}
           <div className="flex-shrink-0">
-            {company.logoUrl ? (
+            {company.logoUrl && company.logoUrl !== 'null' && company.logoUrl !== '' ? (
               <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-xl overflow-hidden shadow-lg border-4 border-white">
                 <Image
                   src={company.logoUrl}
@@ -50,7 +51,7 @@ export default function CompanyHeader({ company }: CompanyHeaderProps) {
                 className="w-24 h-24 lg:w-32 lg:h-32 rounded-xl flex items-center justify-center text-white text-2xl lg:text-3xl font-bold shadow-lg"
                 style={{ backgroundColor: 'var(--brand-primary)' }}
               >
-                {company.companyName.charAt(0).toUpperCase()}
+                <PiBuildingsDuotone className='w-12 h-12'/>
               </div>
             )}
           </div>

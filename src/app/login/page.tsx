@@ -5,7 +5,7 @@ import Link from 'next/link'
 import GlareHover from '@/components/ui/GlareHover'
 import { authLogin } from '@/lib/api'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { setAccessToken } from '@/lib/auth-utils'
+import { storeAuthMetadata } from '@/lib/auth-utils'
 
 interface LoginResponse {
   session?: {
@@ -49,15 +49,13 @@ function LoginForm() {
 
       const res = await authLogin({ email, password }) as LoginResponse
       
-      // Backend sets tokens as HttpOnly cookies automatically, so we don't need to handle them client-side
-      // Extract only non-sensitive metadata for UI state management
-      const expiresAt = res?.session?.expires_at
-      const userId = res?.profile?.id
-      const subdomain = res?.subdomain
-
-      // Store only non-sensitive client metadata (expires_at, user_id, subdomain) for UI routing
-      // The access token is stored as HttpOnly cookie by the backend and sent automatically with requests
-      setAccessToken(undefined, expiresAt, userId, subdomain)
+      // Backend sets tokens as HttpOnly cookies automatically
+      // We only store non-sensitive metadata for UI routing and state management
+      storeAuthMetadata({
+        expiresAt: res?.session?.expires_at,
+        userId: res?.profile?.id,
+        subdomain: res?.subdomain,
+      })
       
       // Handle redirect based on response
       // Check multiple conditions to determine if onboarding is needed

@@ -52,20 +52,29 @@ export async function POST(req: Request) {
 		// Create response with the verification data
 		const response = NextResponse.json(data || { ok: true })
 		
-		// Extract access token from session object or direct accessToken field
+		// Extract tokens from session object or direct fields
 		const accessToken = data?.session?.access_token || data?.accessToken
+		const refreshToken = data?.session?.refresh_token || data?.refreshToken
 		
-		// Set the accessToken as an HttpOnly cookie for secure server-side access
+		// Set cookies as HttpOnly for secure server-side access
+		const cookieDomain = getCookieDomain(req)
+		const cookieOptions = {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'lax' as const,
+			maxAge: 60 * 60 * 24 * 7, // 7 days
+			path: '/',
+			domain: cookieDomain,
+		}
+		
 		if (accessToken) {
-            const cookieDomain = getCookieDomain(req)
-            response.cookies.set('accessToken', accessToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                maxAge: 60 * 60 * 24 * 7, // 7 days
-                path: '/',
-                domain: cookieDomain,
-            })
+			console.log('[Verify Email API] Setting accessToken cookie')
+			response.cookies.set('accessToken', accessToken, cookieOptions)
+		}
+		
+		if (refreshToken) {
+			console.log('[Verify Email API] Setting refreshToken cookie')
+			response.cookies.set('refreshToken', refreshToken, cookieOptions)
 		}
 		
 		return response

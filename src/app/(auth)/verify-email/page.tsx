@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { authVerifyEmail, authResetPassword } from '@/lib/api'
-import { setAccessToken } from '@/lib/auth-utils'
+import { storeAuthMetadata } from '@/lib/auth-utils'
 
 function ResetPasswordForm({ accessToken }: { accessToken: string }) {
 	const [password, setPassword] = useState('')
@@ -85,14 +85,12 @@ function VerifyEmailContent() {
 			console.log('Verify email response:', res)
 			
 			// Backend sets tokens as HttpOnly cookies automatically during verification
-			// Extract only non-sensitive metadata for UI state management
-			const expiresAt = res?.session?.expires_at
-			const userId = res?.profile?.id || undefined
-			const subdomain = res?.subdomain || undefined
-			
-			// Store only non-sensitive client metadata (expires_at, user_id, subdomain) for UI routing
-			// The access token is stored as HttpOnly cookie by the backend and sent automatically with requests
-			setAccessToken(undefined, expiresAt, userId, subdomain)
+			// We only store non-sensitive metadata for UI routing and state management
+			storeAuthMetadata({
+				expiresAt: res?.session?.expires_at,
+				userId: res?.profile?.id,
+				subdomain: res?.subdomain || undefined,
+			})
 			
 			setSuccess(true)
 			

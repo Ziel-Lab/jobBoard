@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { ChevronLeft, ChevronRight, Building2, Users, Settings, CheckCircle } from 'lucide-react'
 import { CustomSelect } from '@/components/ui/custom-select'
 import { buildSubdomainUrl } from '@/lib/subdomain-utils'
+import { LocationAutocomplete } from '@/components/jobs/location-autocomplete'
 
 // Validation schemas for each step
 const companyDetailsSchema = z.object({
@@ -328,20 +329,19 @@ function CompanyOnboardingPage() {
 						</div>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div>
+							<div className="relative z-[9999]">
 								<label className="block text-sm font-medium text-white/90 mb-2">
 									Location *
 								</label>
-								<input
-									{...companyForm.register('location')}
-									className={getInputClasses(!!companyForm.formState.errors.location)}
+								<LocationAutocomplete
+									value={companyForm.watch('location') || ''}
+									onChange={(value) => {
+										companyForm.setValue('location', value)
+										companyForm.trigger('location')
+									}}
 									placeholder="City, Country"
+									error={companyForm.formState.errors.location?.message}
 								/>
-								{companyForm.formState.errors.location && (
-									<p className="text-red-400 text-sm mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
-										{companyForm.formState.errors.location.message}
-									</p>
-								)}
 							</div>
 
 							<div>
