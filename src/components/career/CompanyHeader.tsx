@@ -95,13 +95,20 @@ export default function CompanyHeader({ company }: CompanyHeaderProps) {
                     Visit Website
                   </a>
                 )}
-                
-                <button
+                <a
+                  href="#jobs-section"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium transition-colors duration-200 hover:opacity-90"
                   style={{ backgroundColor: 'var(--brand-primary)' }}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    document.getElementById('jobs-section')?.scrollIntoView({ 
+                      behavior: 'smooth',
+                      block: 'start'
+                    })
+                  }}
                 >
                   View Open Positions
-                </button>
+                </a>
               </div>
             </div>
           </div>

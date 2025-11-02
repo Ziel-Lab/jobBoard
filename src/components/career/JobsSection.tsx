@@ -20,6 +20,36 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(6)
 
+  const formatTextContent = (content: unknown): string => {
+    if (!content) return ''
+    
+
+    if (Array.isArray(content)) {
+      return content
+        .map(item => `• ${String(item).trim()}`)
+        .join('\n')
+    }
+    
+
+    const strContent = String(content)
+    
+    if (strContent.startsWith('[') && strContent.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(strContent)
+        if (Array.isArray(parsed)) {
+          return parsed
+            .map(item => `• ${String(item).trim()}`)
+            .join('\n')
+        }
+      } catch {
+
+      }
+    }
+    
+
+    return strContent
+  }
+
   const formatSalary = (min?: number, max?: number, currency: string = 'USD') => {
     if (!min && !max) return 'Salary not specified'
     
@@ -145,7 +175,7 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
   return (
     <div className="bg-gray-50 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+        <div className="text-center mb-12" id="jobs-section">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Open Positions at {company.companyName}
           </h2>
@@ -166,7 +196,7 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                 placeholder="Search jobs by title, description, or skills..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 text-black placeholder-gray-400 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -205,11 +235,11 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                     Employment Type
                   </label>
                   <select
-                    value={selectedEmploymentType}
+                    value={selectedEmploymentType}                    
                     onChange={(e) => setSelectedEmploymentType(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   >
-                    <option value="all">All Types</option>
+                    <option value="all" className="text-gray-500">All Types</option>
                     {employmentTypes.map(type => (
                       <option key={type.value} value={type.value}>
                         {type.label}
@@ -226,9 +256,9 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                   <select
                     value={selectedExperienceLevel}
                     onChange={(e) => setSelectedExperienceLevel(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   >
-                    <option value="all">All Levels</option>
+                    <option value="all" className="text-gray-500">All Levels</option>
                     {experienceLevels.map(level => (
                       <option key={level.value} value={level.value}>
                         {level.label}
@@ -245,9 +275,9 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                   <select
                     value={selectedLocation}
                     onChange={(e) => setSelectedLocation(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   >
-                    <option value="all">All Locations</option>
+                    <option value="all" className="text-gray-500">All Locations</option>
                     {locations.map(location => (
                       <option key={location.value} value={location.value}>
                         {location.label}
@@ -487,14 +517,14 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                     <div className="overflow-hidden">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3">Key Responsibilities</h4>
                       <div className="text-gray-600 leading-relaxed whitespace-pre-line break-words break-all max-w-full">
-                        {selectedJob.keyResponsibilities}
+                        {formatTextContent(selectedJob.keyResponsibilities)}
                       </div>
                     </div>
 
                     <div className="overflow-hidden">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3">Requirements & Qualifications</h4>
                       <div className="text-gray-600 leading-relaxed whitespace-pre-line break-words break-all max-w-full">
-                        {selectedJob.requirementsQualifications}
+                        {formatTextContent(selectedJob.requirementsQualifications)}
                       </div>
                     </div>
 
@@ -502,7 +532,7 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                       <div className="overflow-hidden">
                         <h4 className="text-lg font-semibold text-gray-900 mb-3">Benefits & Perks</h4>
                         <div className="text-gray-600 leading-relaxed whitespace-pre-line break-words break-all max-w-full">
-                          {selectedJob.benefitsPerks}
+                          {formatTextContent(selectedJob.benefitsPerks)}
                         </div>
                       </div>
                     )}

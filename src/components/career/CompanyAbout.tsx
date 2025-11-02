@@ -92,18 +92,18 @@ export default function CompanyAbout({ company }: CompanyAboutProps) {
                   </div>
                 )}
                 
-                <div className="flex items-start gap-3">
+                {/* <div className="flex items-start gap-3">
                   <Calendar className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-gray-500">Founded</p>
                     <p className="text-gray-900">{formatDate(company.createdAt)}</p>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
 
             {/* Why Work With Us */}
-            <div 
+            {/* <div 
               className="rounded-xl p-6 text-white"
               style={{ backgroundColor: 'var(--brand-primary)' }}
             >
@@ -130,7 +130,7 @@ export default function CompanyAbout({ company }: CompanyAboutProps) {
                   Cutting-edge technology stack
                 </li>
               </ul>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

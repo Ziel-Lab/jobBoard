@@ -155,4 +155,64 @@ export function getOauthUrl(params: { provider: 'google' | 'linkedin'; redirect_
 	return request<{ url: string }>(`/auth/oauth/url?${qp.toString()}`)
 }
 
+// Applicant APIs
+export interface UploadResumeResponse {
+	success: boolean
+	data?: {
+		resumeUrl: string
+		message?: string
+	}
+	message?: string
+}
+
+export interface SubmitApplicationPayload {
+	jobId: string
+	fullName: string
+	email: string
+	phone: string
+	resumeUrl: string
+	coverLetter?: string
+	linkedinUrl?: string
+	portfolioUrl?: string
+}
+
+export interface SubmitApplicationResponse {
+	success: boolean
+	data?: {
+		applicationId?: string
+		message?: string
+	}
+	message?: string
+}
+
+export async function uploadResume(file: File): Promise<UploadResumeResponse> {
+	const formData = new FormData()
+	formData.append('file', file)
+	
+	const url = `${API_BASE_PATH}/applicants/upload-resume`
+	
+	const res = await fetch(url, {
+		method: 'POST',
+		credentials: 'include',
+		body: formData,
+	})
+	
+	if (!res.ok) {
+		let message = 'Failed to upload resume'
+		try {
+			const data = await res.json() as { message?: string; error?: string }
+			message = data.message || data.error || message
+		} catch {}
+		throw new Error(message)
+	}
+	
+	return await res.json() as UploadResumeResponse
+}
+
+export function submitApplication(payload: SubmitApplicationPayload) {
+	return request<SubmitApplicationResponse>('/applicants/submit', {
+		method: 'POST',
+		body: payload,
+	})
+}
 

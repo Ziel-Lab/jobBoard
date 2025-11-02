@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { MdOutlineUploadFile } from "react-icons/md";
+import { MdCheckCircle, MdError } from "react-icons/md";
 
 interface ApplicationFormProps {
     jobId: string
     jobTitle: string
     companyName?: string
     onClose: () => void
-    onSubmit: (formData: ApplicationFormData) => Promise<void>
+    onSubmit: (formData: ApplicationFormData) => Promise<{ success: boolean; message: string }>
 }
 
 export interface ApplicationFormData {
@@ -21,6 +22,8 @@ export interface ApplicationFormData {
 
 export default function ApplicationForm({ jobTitle, companyName, onClose, onSubmit }: ApplicationFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+    const [statusMessage, setStatusMessage] = useState('')
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -65,15 +68,30 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
         }
 
         setIsSubmitting(true)
+        setSubmitStatus('idle')
+        setStatusMessage('')
+        
         try {
             const submitData: ApplicationFormData = {
                 ...formData,
                 resume: resumeFile
             }
-            await onSubmit(submitData)
-            onClose()
+            const result = await onSubmit(submitData)
+            
+            setSubmitStatus('success')
+            setStatusMessage(result.message || 'Application submitted successfully!')
+            
+            // Close the form after a short delay to show success message
+            setTimeout(() => {
+                onClose()
+            }, 2000)
         } catch (error) {
-            console.error('Error submitting application:', error)
+            setSubmitStatus('error')
+            setStatusMessage(
+                error instanceof Error 
+                    ? error.message 
+                    : 'Failed to submit application. Please try again.'
+            )
         } finally {
             setIsSubmitting(false)
         }
@@ -191,7 +209,7 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 </p>
                             </div>                        <div>
                             <label htmlFor="linkedinUrl" className="block text-sm font-medium text-white/90 mb-2">
-                                LinkedIn Profile URL <span className="text-white/50">(Optional)</span>
+                                LinkedIn Profile URL or Portfolio URL <span className="text-white/50">(Optional)</span>
                             </label>
                             <input
                                 type="url"
@@ -203,7 +221,7 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                             />
                         </div>
 
-                        <div>
+                        {/* <div>
                             <label htmlFor="portfolioUrl" className="block text-sm font-medium text-white/90 mb-2">
                                 Portfolio URL <span className="text-white/50">(Optional)</span>
                             </label>
@@ -215,7 +233,7 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/20 focus:border-white/20"
                             />
-                        </div>
+                        </div> */}
 
                         <div>
                             <label htmlFor="coverLetter" className="block text-sm font-medium text-white/90 mb-2">
@@ -233,20 +251,53 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                             />
                         </div>
 
+                        {/* Status Message */}
+                        {submitStatus !== 'idle' && (
+                            <div className={`flex items-center gap-3 p-4 rounded-xl ${
+                                submitStatus === 'success' 
+                                    ? 'bg-green-500/10 border border-green-500/20' 
+                                    : 'bg-red-500/10 border border-red-500/20'
+                            }`}>
+                                {submitStatus === 'success' ? (
+                                    <MdCheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                ) : (
+                                    <MdError className="w-5 h-5 text-red-500 flex-shrink-0" />
+                                )}
+                                <p className={`text-sm ${
+                                    submitStatus === 'success' ? 'text-green-400' : 'text-red-400'
+                                }`}>
+                                    {statusMessage}
+                                </p>
+                            </div>
+                        )}
+
                         <div className="flex gap-4 pt-6">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="flex-1 px-6 py-3 border border-white/10 rounded-xl text-white/90 font-semibold hover:bg-white/5 transition-colors"
+                                disabled={isSubmitting}
+                                className="flex-1 px-6 py-3 border border-white/10 rounded-xl text-white/90 font-semibold hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Cancel
+                                {submitStatus === 'success' ? 'Close' : 'Cancel'}
                             </button>
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
-                                className="flex-1 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 transform hover:scale-[1.02]"
+                                disabled={isSubmitting || submitStatus === 'success'}
+                                className="flex-1 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isSubmitting ? 'Submitting...' : 'Submit'}
+                                {isSubmitting ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Submitting...
+                                    </span>
+                                ) : submitStatus === 'success' ? (
+                                    'Submitted!'
+                                ) : (
+                                    'Submit Application'
+                                )}
                             </button>
                         </div>
                     </form>

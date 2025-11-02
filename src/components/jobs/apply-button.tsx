@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import ApplicationForm, { ApplicationFormData } from './application-form'
+import { uploadResume, submitApplication } from '@/lib/api'
 
 interface ApplyButtonProps {
     jobId: string
@@ -18,32 +19,38 @@ export default function ApplyButton({ jobId, jobTitle, companyName, primaryColor
 
     const handleApplicationSubmit = async (formData: ApplicationFormData) => {
         try {
-            // Create FormData object to handle file upload
-            const form = new FormData()
-            form.append('resume', formData.resume)
-            form.append('data', JSON.stringify({
+            // Step 1: Upload resume
+            const uploadResponse = await uploadResume(formData.resume)
+            
+            if (!uploadResponse.success || !uploadResponse.data?.resumeUrl) {
+                throw new Error(uploadResponse.message || 'Failed to upload resume')
+            }
+
+            const resumeUrl = uploadResponse.data.resumeUrl
+
+            // Step 2: Submit application with resume URL
+            const submitResponse = await submitApplication({
+                jobId,
                 fullName: formData.fullName,
                 email: formData.email,
                 phone: formData.phone,
+                resumeUrl,
                 coverLetter: formData.coverLetter,
                 linkedinUrl: formData.linkedinUrl,
-                portfolioUrl: formData.portfolioUrl
-            }))
-
-            const response = await fetch(`/api/jobs/${jobId}/apply`, {
-                method: 'POST',
-                body: form,
+                portfolioUrl: formData.portfolioUrl,
             })
 
-            if (!response.ok) {
-                throw new Error('Failed to submit application')
+            if (!submitResponse.success) {
+                throw new Error(submitResponse.message || 'Failed to submit application')
             }
 
-            // Show success message or handle success case
-            alert('Application submitted successfully!')
+            // Application submitted successfully
+            return {
+                success: true,
+                message: 'Application submitted successfully!'
+            }
         } catch (error) {
-            console.error('Error:', error)
-            alert('Failed to submit application. Please try again.')
+            console.error('Application submission error:', error)
             throw error
         }
     }
