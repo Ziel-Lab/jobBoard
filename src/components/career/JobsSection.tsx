@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Job } from '@/types/job'
 import { Company as CompanyType } from '@/types/company'
 import { MapPin, Clock, DollarSign, Briefcase, Users, Calendar, Search, Filter, X } from 'lucide-react'
@@ -11,6 +12,7 @@ interface JobsSectionProps {
 }
 
 export default function JobsSection({ jobs, company }: JobsSectionProps) {
+  const router = useRouter()
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEmploymentType, setSelectedEmploymentType] = useState<string>('all')
@@ -418,7 +420,7 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                         style={{ backgroundColor: 'var(--brand-primary)' }}
                         onClick={(e) => {
                           e.stopPropagation()
-                          // Handle apply action
+                          router.push(`/jobs/${job.id}`)
                         }}
                       >
                         Apply Now
@@ -567,6 +569,7 @@ export default function JobsSection({ jobs, company }: JobsSectionProps) {
                     <button
                       className="w-full py-3 px-6 text-white font-medium rounded-lg transition-colors duration-200 hover:opacity-90"
                       style={{ backgroundColor: 'var(--brand-primary)' }}
+                      onClick={() => router.push(`/jobs/${selectedJob.id}`)}
                     >
                       Apply for this position
                     </button>

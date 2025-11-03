@@ -46,6 +46,11 @@ async function fetchDashboardData() {
         company?: unknown
     }
 
+    type ApplicationStatsResponse = {
+        newApplications: number
+        totalApplications: number
+    }
+
     const params = new URLSearchParams({
         page: '1',
         pageSize: '5',
@@ -59,6 +64,7 @@ async function fetchDashboardData() {
 	const proto = hdrs.get('x-forwarded-proto') || 'http'
 	const baseUrl = `${proto}://${host}`
 
+	// Fetch jobs data
 	const res = await fetch(`${baseUrl}/api/jobs/public?${params.toString()}`,
     {
         method: 'GET',
@@ -75,6 +81,39 @@ async function fetchDashboardData() {
         stats.totalJobs = payload.total || recentJobs.length
         stats.activeJobs = payload.total || recentJobs.length
     }
+
+	// Fetch application stats
+	try {
+		// Get cookies to forward to the API route
+		const cookieStore = await cookies()
+		const allCookies = cookieStore.getAll()
+		const cookieHeader = allCookies
+			.map(cookie => `${cookie.name}=${cookie.value}`)
+			.join('; ')
+
+		const applicationStatsRes = await fetch(`${baseUrl}/api/applications/stats`, {
+			method: 'GET',
+			cache: 'no-store',
+			headers: {
+				'Cookie': cookieHeader,
+				'Content-Type': 'application/json',
+			},
+		})
+
+		if (applicationStatsRes.ok) {
+			const applicationStatsJson = (await applicationStatsRes.json()) as { success: boolean; data: ApplicationStatsResponse | null }
+			const applicationStats = applicationStatsJson?.data
+			
+			if (applicationStats) {
+				stats.totalApplications = applicationStats.totalApplications
+				stats.newApplications = applicationStats.newApplications
+			}
+		} else {
+			console.error('[Dashboard] Failed to fetch application stats:', applicationStatsRes.status)
+		}
+	} catch (error) {
+		console.error('[Dashboard] Error fetching application stats:', error)
+	}
 
     return { stats, recentJobs }
 }
