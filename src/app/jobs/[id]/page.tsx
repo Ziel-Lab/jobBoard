@@ -90,32 +90,81 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 	const formatTextContent = (content: unknown): string => {
 		if (!content) return ''
 		
-		// If it's an array, join with line breaks
+		// If it's already an array, format it
 		if (Array.isArray(content)) {
 			return content
-				.map(item => `• ${String(item).trim()}`)
-				.join('<br/>')
+				.filter(item => item && String(item).trim()) // Filter out empty items
+				.map(item => `<div class="flex items-start gap-2 mb-2"><span class="text-lg leading-none mt-1 flex-shrink-0">•</span><span class="flex-1 break-words overflow-wrap-anywhere">${String(item).trim()}</span></div>`)
+				.join('')
 		}
 		
-		// If it's a string, replace newlines with <br/>
-		const strContent = String(content)
+		// Convert to string and try to parse if it's a JSON array string
+		const strContent = String(content).trim()
 		
 		// Check if it looks like a JSON array string
 		if (strContent.startsWith('[') && strContent.endsWith(']')) {
 			try {
+				// Try parsing the JSON string
 				const parsed = JSON.parse(strContent)
-				if (Array.isArray(parsed)) {
+				if (Array.isArray(parsed) && parsed.length > 0) {
 					return parsed
-						.map(item => `• ${String(item).trim()}`)
-						.join('<br/>')
+						.filter(item => item && String(item).trim()) // Filter out empty items
+						.map(item => `<div class="flex items-start gap-2 mb-2"><span class="text-lg leading-none mt-1 flex-shrink-0">•</span><span class="flex-1 break-words overflow-wrap-anywhere">${String(item).trim()}</span></div>`)
+						.join('')
 				}
 			} catch {
-				// If parsing fails, treat as regular string
+				console.error('Failed to parse JSON array, attempting manual extraction:', strContent.substring(0, 100))
+				
+				// Manual extraction for malformed JSON
+				try {
+					// Remove outer brackets
+					const inner = strContent.slice(1, -1).trim()
+					
+					// Try different splitting strategies
+					let items: string[] = []
+					
+					// Strategy 1: Split by comma followed by quote
+					if (inner.includes('","') || inner.includes('", "')) {
+						items = inner
+							.split(/",\s*"/)
+							.map(item => item.replace(/^["']|["']$/g, '').trim())
+							.filter(item => item)
+					}
+					// Strategy 2: Split by just comma if no quotes
+					else if (inner.includes(',')) {
+						items = inner
+							.split(',')
+							.map(item => item.replace(/^["']|["']$/g, '').trim())
+							.filter(item => item)
+					}
+					// Strategy 3: Single item
+					else if (inner) {
+						items = [inner.replace(/^["']|["']$/g, '').trim()]
+					}
+					
+					if (items.length > 0) {
+						return items
+							.map(item => `<div class="flex items-start gap-2 mb-2"><span class="text-lg leading-none mt-1 flex-shrink-0">•</span><span class="flex-1 break-words overflow-wrap-anywhere">${item}</span></div>`)
+							.join('')
+					}
+				} catch (manualError) {
+					console.error('Manual extraction also failed:', manualError)
+				}
 			}
 		}
 		
-		// Regular string - replace newlines with <br/>
-		return strContent.replace(/\n/g, '<br/>')
+		// Check if content has multiple lines (separated by newlines)
+		if (strContent.includes('\n')) {
+			const lines = strContent.split('\n').filter(line => line.trim())
+			if (lines.length > 1) {
+				return lines
+					.map(line => `<div class="flex items-start gap-2 mb-2"><span class="text-lg leading-none mt-1 flex-shrink-0">•</span><span class="flex-1 break-words overflow-wrap-anywhere">${line.trim()}</span></div>`)
+					.join('')
+			}
+		}
+		
+		// Regular string - return as paragraph
+		return `<p class="break-words overflow-wrap-anywhere">${strContent}</p>`
 	}
 
 	// Ensure job description renders even when only plain text is provided
@@ -309,9 +358,9 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 									</div>
 									<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>About the Role</h2>
 								</div>
-								<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
-									<div className="break-words" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
-								</div>
+							<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
+								<div className="break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }} dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+							</div>
 							</div>
 						</section>
 						
@@ -364,9 +413,9 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</div>
 										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Key Responsibilities</h2>
 									</div>
-									<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
-										<div className="break-words" dangerouslySetInnerHTML={{ __html: keyResponsibilitiesHtml }} />
-									</div>
+								<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
+									<div className="break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }} dangerouslySetInnerHTML={{ __html: keyResponsibilitiesHtml }} />
+								</div>
 								</div>
 							</section>
 						)}
@@ -386,9 +435,9 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</div>
 										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Requirements & Qualifications</h2>
 									</div>
-									<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
-										<div className="break-words" dangerouslySetInnerHTML={{ __html: requirementsHtml }} />
-									</div>
+								<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
+									<div className="break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }} dangerouslySetInnerHTML={{ __html: requirementsHtml }} />
+								</div>
 								</div>
 							</section>
 						)}
@@ -408,9 +457,9 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</div>
 										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Benefits & Perks</h2>
 									</div>
-									<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
-										<div className="break-words" dangerouslySetInnerHTML={{ __html: benefitsHtml }} />
-									</div>
+								<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
+									<div className="break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }} dangerouslySetInnerHTML={{ __html: benefitsHtml }} />
+								</div>
 								</div>
 							</section>
 						)}

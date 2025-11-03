@@ -103,28 +103,28 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
     }
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]">
             <div className="fixed inset-0 overflow-y-auto">
                 <div className="flex min-h-full items-start sm:items-center justify-center p-0 sm:p-4">
-                    <div className="relative w-full min-h-screen sm:min-h-0 sm:max-w-2xl sm:rounded-3xl bg-black/90 border-y sm:border border-white/10">
+                    <div className="relative w-full min-h-screen sm:min-h-0 sm:max-w-2xl sm:rounded-3xl bg-white shadow-2xl border-y sm:border border-gray-200">
                         {/* Subtle Pattern Overlay */}
-                        <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden sm:rounded-3xl">
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-y-12" />
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-radial from-white/5 to-transparent rounded-full blur-3xl" />
-                            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-radial from-white/3 to-transparent rounded-full blur-3xl" />
+                        <div className="absolute inset-0 opacity-5 pointer-events-none overflow-hidden sm:rounded-3xl">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent transform -skew-y-12" />
+                            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-radial from-blue-500/5 to-transparent rounded-full blur-3xl" />
+                            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-radial from-purple-500/5 to-transparent rounded-full blur-3xl" />
                         </div>
 
                         <div className="relative p-4 sm:p-8">
                             <div className="flex justify-between items-start sm:items-center mb-6 sm:mb-8">
                                 <div>
-                                    <h2 className="text-lg sm:text-2xl font-bold text-white pr-8">Apply for {jobTitle}</h2>
+                                    <h2 className="text-lg sm:text-2xl font-bold text-gray-900 pr-8">Apply for {jobTitle}</h2>
                                     {companyName && (
-                                        <p className="text-sm text-white/70 mt-1">at {companyName}</p>
+                                        <p className="text-sm text-gray-600 mt-1">at {companyName}</p>
                                     )}
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="text-white/70 hover:text-white transition-colors p-1"
+                                    className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                                 >
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -132,7 +132,7 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 </button>
                             </div>                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label htmlFor="fullName" className="block text-sm font-medium text-white/90 mb-2">
+                            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
                                 Full Name *
                             </label>
                             <input
@@ -142,12 +142,12 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 required
                                 value={formData.fullName}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/20 focus:border-white/20"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-2">
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                                 Email *
                             </label>
                             <input
@@ -157,12 +157,12 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 required
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/20 focus:border-white/20"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-white/90 mb-2">
+                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                                 Phone Number *
                             </label>
                             <input
@@ -172,17 +172,17 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 required
                                 value={formData.phone}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/20 focus:border-white/20"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
 
                             <div>
-                                <label htmlFor="resume" className="block text-sm font-medium text-white/90 mb-2">
+                                <label htmlFor="resume" className="block text-sm font-medium text-gray-700 mb-2">
                                     Resume Upload *
                                 </label>
                                 <div className="mt-1 flex items-center gap-4">
                                     <label className="flex-1 cursor-pointer">
-                                        <div className="relative flex items-center justify-center px-4 py-3 bg-white/5 border border-white/10 hover:border-white/20 rounded-xl text-white transition-all duration-200">
+                                        <div className="relative flex items-center justify-center px-4 py-3 bg-gray-50 border border-gray-300 hover:border-blue-400 hover:bg-blue-50 rounded-xl text-gray-700 transition-all duration-200">
                                             <input
                                                 type="file"
                                                 id="resume"
@@ -193,8 +193,8 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                                 required
                                             />
                                             <div className="flex items-center gap-2">
-                                                <MdOutlineUploadFile className='w-5 h-5' />
-                                                <span>
+                                                <MdOutlineUploadFile className='w-5 h-5 text-blue-600' />
+                                                <span className="text-sm">
                                                     {resumeFile ? resumeFile.name : 'Click to upload resume'}
                                                 </span>
                                             </div>
@@ -202,14 +202,14 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                     </label>
                                 </div>
                                 {fileError && (
-                                    <p className="mt-2 text-sm text-red-400">{fileError}</p>
+                                    <p className="mt-2 text-sm text-red-600">{fileError}</p>
                                 )}
-                                <p className="mt-2 text-sm text-white/50">
+                                <p className="mt-2 text-sm text-gray-500">
                                     Maximum file size: 5MB. Supported formats: PDF, DOC, DOCX
                                 </p>
                             </div>                        <div>
-                            <label htmlFor="linkedinUrl" className="block text-sm font-medium text-white/90 mb-2">
-                                LinkedIn Profile URL or Portfolio URL <span className="text-white/50">(Optional)</span>
+                            <label htmlFor="linkedinUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                                LinkedIn Profile URL or Portfolio URL <span className="text-gray-500">(Optional)</span>
                             </label>
                             <input
                                 type="url"
@@ -217,13 +217,13 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 name="linkedinUrl"
                                 value={formData.linkedinUrl}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/20 focus:border-white/20"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div>
 
                         {/* <div>
-                            <label htmlFor="portfolioUrl" className="block text-sm font-medium text-white/90 mb-2">
-                                Portfolio URL <span className="text-white/50">(Optional)</span>
+                            <label htmlFor="portfolioUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                                Portfolio URL <span className="text-gray-500">(Optional)</span>
                             </label>
                             <input
                                 type="url"
@@ -231,12 +231,12 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 name="portfolioUrl"
                                 value={formData.portfolioUrl}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/20 focus:border-white/20"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             />
                         </div> */}
 
                         <div>
-                            <label htmlFor="coverLetter" className="block text-sm font-medium text-white/90 mb-2">
+                            <label htmlFor="coverLetter" className="block text-sm font-medium text-gray-700 mb-2">
                                 Cover Letter *
                             </label>
                             <textarea
@@ -246,7 +246,7 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 value={formData.coverLetter}
                                 onChange={handleChange}
                                 rows={6}
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:ring-2 focus:ring-white/20 focus:border-white/20"
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
                                 placeholder="Tell us why you're interested in this position..."
                             />
                         </div>
@@ -255,16 +255,16 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                         {submitStatus !== 'idle' && (
                             <div className={`flex items-center gap-3 p-4 rounded-xl ${
                                 submitStatus === 'success' 
-                                    ? 'bg-green-500/10 border border-green-500/20' 
-                                    : 'bg-red-500/10 border border-red-500/20'
+                                    ? 'bg-green-50 border border-green-200' 
+                                    : 'bg-red-50 border border-red-200'
                             }`}>
                                 {submitStatus === 'success' ? (
-                                    <MdCheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <MdCheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
                                 ) : (
-                                    <MdError className="w-5 h-5 text-red-500 flex-shrink-0" />
+                                    <MdError className="w-5 h-5 text-red-600 flex-shrink-0" />
                                 )}
-                                <p className={`text-sm ${
-                                    submitStatus === 'success' ? 'text-green-400' : 'text-red-400'
+                                <p className={`text-sm font-medium ${
+                                    submitStatus === 'success' ? 'text-green-700' : 'text-red-700'
                                 }`}>
                                     {statusMessage}
                                 </p>
@@ -276,14 +276,14 @@ export default function ApplicationForm({ jobTitle, companyName, onClose, onSubm
                                 type="button"
                                 onClick={onClose}
                                 disabled={isSubmitting}
-                                className="flex-1 px-6 py-3 border border-white/10 rounded-xl text-white/90 font-semibold hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {submitStatus === 'success' ? 'Close' : 'Cancel'}
                             </button>
                             <button
                                 type="submit"
                                 disabled={isSubmitting || submitStatus === 'success'}
-                                className="flex-1 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? (
                                     <span className="flex items-center justify-center gap-2">

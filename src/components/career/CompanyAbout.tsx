@@ -37,7 +37,7 @@ export default function CompanyAbout({ company }: CompanyAboutProps) {
             <h2 className="text-3xl font-bold text-gray-900 mb-6">About {company.companyName}</h2>
             
             <div className="prose prose-lg max-w-none text-gray-600">
-              <p className="text-lg leading-relaxed mb-6">
+              <p className="text-lg leading-relaxed mb-6 break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                 {company.companyDescription}
               </p>
               
@@ -69,22 +69,22 @@ export default function CompanyAbout({ company }: CompanyAboutProps) {
                 
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-500">Location</p>
-                    <p className="text-gray-900">{company.location}</p>
+                    <p className="text-gray-900 break-words overflow-wrap-anywhere" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{company.location}</p>
                   </div>
                 </div>
                 
                 {company.websiteUrl && (
                   <div className="flex items-start gap-3">
                     <Globe className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-gray-500">Website</p>
                       <a
                         href={company.websiteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                        className="text-blue-600 hover:text-blue-800 transition-colors duration-200 break-all"
                       >
                         {company.websiteUrl}
                       </a>
