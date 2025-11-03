@@ -288,8 +288,8 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</div>
 										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>About {company.companyName}</h2>
 									</div>
-									<div className="prose prose-lg max-w-none">
-										<p className="text-gray-700">{companyDescription}</p>
+									<div className="prose prose-lg max-w-none overflow-hidden">
+										<p className="text-gray-700 break-words">{companyDescription}</p>
 									</div>
 								</div>
 							</section>
@@ -309,8 +309,8 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 									</div>
 									<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>About the Role</h2>
 								</div>
-								<div className="prose prose-lg max-w-none text-gray-700">
-									<div dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+								<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
+									<div className="break-words" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
 								</div>
 							</div>
 						</section>
@@ -364,8 +364,8 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</div>
 										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Key Responsibilities</h2>
 									</div>
-									<div className="prose prose-lg max-w-none text-gray-700">
-										<div dangerouslySetInnerHTML={{ __html: keyResponsibilitiesHtml }} />
+									<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
+										<div className="break-words" dangerouslySetInnerHTML={{ __html: keyResponsibilitiesHtml }} />
 									</div>
 								</div>
 							</section>
@@ -386,8 +386,8 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</div>
 										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Requirements & Qualifications</h2>
 									</div>
-									<div className="prose prose-lg max-w-none text-gray-700">
-										<div dangerouslySetInnerHTML={{ __html: requirementsHtml }} />
+									<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
+										<div className="break-words" dangerouslySetInnerHTML={{ __html: requirementsHtml }} />
 									</div>
 								</div>
 							</section>
@@ -408,8 +408,8 @@ export default async function PublicJobPage ({ params }: PublicJobPageProps)
 										</div>
 										<h2 className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>Benefits & Perks</h2>
 									</div>
-									<div className="prose prose-lg max-w-none text-gray-700">
-										<div dangerouslySetInnerHTML={{ __html: benefitsHtml }} />
+									<div className="prose prose-lg max-w-none text-gray-700 overflow-hidden">
+										<div className="break-words" dangerouslySetInnerHTML={{ __html: benefitsHtml }} />
 									</div>
 								</div>
 							</section>

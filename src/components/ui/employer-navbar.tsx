@@ -2,11 +2,29 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 // import { logout } from '@/lib/auth-utils'
 import { LogOut, Home, Briefcase, Users, Settings } from 'lucide-react'
+import { getCurrentSubdomain, buildSubdomainUrl } from '@/lib/subdomain-utils'
 
 export default function EmployerNavbar() {
 	const router = useRouter()
+	const [careersUrl, setCareersUrl] = useState('/careers')
+	const [dashboardUrl, setDashboardUrl] = useState('/employer')
+
+	useEffect(() => {
+		// Get subdomain from current URL and build URLs
+		const subdomain = getCurrentSubdomain()
+		if (subdomain) {
+			const careersUrlBuilt = buildSubdomainUrl('/careers', subdomain)
+			setCareersUrl(careersUrlBuilt)
+			
+			// For employer routes, we can use relative paths since middleware handles subdomain routing
+			// But for consistency and to ensure it works, we'll build the full URL too
+			const dashboardUrlBuilt = buildSubdomainUrl('/employer', subdomain)
+			setDashboardUrl(dashboardUrlBuilt)
+		}
+	}, [])
 
 	function handleLogout() {
 		// logout()
@@ -22,22 +40,41 @@ export default function EmployerNavbar() {
 				<div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
 					<div className="flex items-center justify-between">
 						{/* Logo/Brand */}
-						<Link href="/employer" className="flex items-center gap-2 font-semibold">
-							<span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 shadow-inner">
-								<Briefcase className="w-4 h-4 text-indigo-400" />
-							</span>
-							<span className="text-sm sm:text-base text-white/90">Employer Portal</span>
-						</Link>
+						{dashboardUrl.startsWith('http') ? (
+							<a href={dashboardUrl} className="flex items-center gap-2 font-semibold">
+								<span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 shadow-inner">
+									<Briefcase className="w-4 h-4 text-indigo-400" />
+								</span>
+								<span className="text-sm sm:text-base text-white/90">Employer Portal</span>
+							</a>
+						) : (
+							<Link href={dashboardUrl} className="flex items-center gap-2 font-semibold">
+								<span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-500/20 shadow-inner">
+									<Briefcase className="w-4 h-4 text-indigo-400" />
+								</span>
+								<span className="text-sm sm:text-base text-white/90">Employer Portal</span>
+							</Link>
+						)}
 
 						{/* Navigation Links */}
 						<div className="hidden md:flex items-center gap-6">
-							<Link 
-								href="/employer" 
-								className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
-							>
-								<Home className="w-4 h-4" />
-								Dashboard
-							</Link>
+							{dashboardUrl.startsWith('http') ? (
+								<a 
+									href={dashboardUrl}
+									className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
+								>
+									<Home className="w-4 h-4" />
+									Dashboard
+								</a>
+							) : (
+								<Link 
+									href={dashboardUrl}
+									className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
+								>
+									<Home className="w-4 h-4" />
+									Dashboard
+								</Link>
+							)}
 							<Link 
 								href="/employer/jobs" 
 								className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
@@ -45,13 +82,25 @@ export default function EmployerNavbar() {
 								<Briefcase className="w-4 h-4" />
 								Jobs
 							</Link>
-							<Link 
-								href="/careers" 
-								className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
-							>
-								<Users className="w-4 h-4" />
-								Careers
-							</Link>
+							{careersUrl.startsWith('http') ? (
+								<a 
+									href={careersUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
+								>
+									<Users className="w-4 h-4" />
+									Careers
+								</a>
+							) : (
+								<Link 
+									href={careersUrl}
+									className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
+								>
+									<Users className="w-4 h-4" />
+									Careers
+								</Link>
+							)}
 							<Link 
 								href="/employer/settings" 
 								className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
@@ -73,13 +122,23 @@ export default function EmployerNavbar() {
 
 					{/* Mobile Navigation */}
 					<div className="flex md:hidden items-center gap-4 mt-3 pt-3 border-t border-white/10">
-						<Link 
-							href="/employer" 
-							className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
-						>
-							<Home className="w-4 h-4" />
-							Dashboard
-						</Link>
+						{dashboardUrl.startsWith('http') ? (
+							<a 
+								href={dashboardUrl}
+								className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
+							>
+								<Home className="w-4 h-4" />
+								Dashboard
+							</a>
+						) : (
+							<Link 
+								href={dashboardUrl}
+								className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
+							>
+								<Home className="w-4 h-4" />
+								Dashboard
+							</Link>
+						)}
 						<Link 
 							href="/employer/jobs" 
 							className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
@@ -87,13 +146,23 @@ export default function EmployerNavbar() {
 							<Briefcase className="w-4 h-4" />
 							Jobs
 						</Link>
-						<Link 
-							href="/careers" 
-							className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
-						>
-							<Users className="w-4 h-4" />
-							Careers
-						</Link>
+						{careersUrl.startsWith('http') ? (
+							<a 
+								href={careersUrl}
+								className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
+							>
+								<Users className="w-4 h-4" />
+								Careers
+							</a>
+						) : (
+							<Link 
+								href={careersUrl}
+								className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
+							>
+								<Users className="w-4 h-4" />
+								Careers
+							</Link>
+						)}
 						<Link 
 							href="/employer/settings" 
 							className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
