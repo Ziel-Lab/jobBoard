@@ -4,7 +4,7 @@ import { getSubdomainFromRequest } from '@/lib/subdomain-utils'
 
 // Configuration constants
 const API_VERSION = "v1"
-const MAIN_DOMAIN = "jobboard.com" // Replace with your actual domain
+const MAIN_DOMAIN = "visasure.co" // Replace with your actual domain
 const LOCALHOST_DOMAIN = "localhost"
 
 // Route definitions
