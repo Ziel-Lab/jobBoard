@@ -17,11 +17,12 @@ import {
 	X,
 	Save,
 	AlertCircle,
-	CheckCircle,
+
 	UserPlus,
 	MapPin,
 	Clock
-} from 'lucide-react'
+	} from 'lucide-react'
+import Toast from '@/components/ui/Toast'
 import { CustomSelect } from '@/components/ui/custom-select'
 import Image from 'next/image'
 import { api } from '@/lib/authenticated-api'
@@ -136,7 +137,11 @@ function CompanySettingsPage() {
 	const router = useRouter()
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [isLoading, setIsLoading] = useState(true)
-	const [showSuccess, setShowSuccess] = useState(false)
+	const [toast, setToast] = useState<{
+		visible: boolean
+		type: 'success' | 'error' | 'info'
+		message: string
+	} | null>(null)
 	const [logoPreview, setLogoPreview] = useState<string>('')
 	const [activeTab, setActiveTab] = useState<'general' | 'team'>('general')
 	const [logoFile, setLogoFile] = useState<File | null>(null)
@@ -415,7 +420,7 @@ function CompanySettingsPage() {
 
 			// Only send request if there are changes
 			if (Object.keys(profileData).length === 0) {
-				alert('No changes to save')
+				setToast({ visible: true, type: 'error', message: 'No changes to save' })
 				return
 			}
 
@@ -429,15 +434,11 @@ function CompanySettingsPage() {
 			// Clear logo file after successful save
 			setLogoFile(null)
 
-			// Show success message
-			setShowSuccess(true)
-			
-			setTimeout(() => {
-				setShowSuccess(false)
-			}, 3000)
+			// Show success message via toast
+			setToast({ visible: true, type: 'success', message: 'Settings updated successfully!' })
 		} catch (error) {
 			console.error('Error updating settings:', error)
-			alert(error instanceof Error ? error.message : 'Failed to update settings. Please try again.')
+			setToast({ visible: true, type: 'error', message: error instanceof Error ? error.message : 'Failed to update settings. Please try again.' })
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -452,13 +453,14 @@ function CompanySettingsPage() {
 			<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl" />
 
 			{/* Success Notification */}
-			{showSuccess && (
-				<div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300">
-					<div className="bg-green-500/20 backdrop-blur-xl border border-green-500/30 rounded-lg p-4 flex items-center gap-3 shadow-lg">
-						<CheckCircle className="w-5 h-5 text-green-400" />
-						<p className="text-white font-medium">Settings updated successfully!</p>
-					</div>
-				</div>
+			{toast && (
+				<Toast
+					type={toast.type}
+					message={toast.message}
+					visible={toast.visible}
+					onClose={() => setToast(null)}
+					duration={3000}
+				/>
 			)}
 
 			{/* Invite Modal */}
@@ -829,7 +831,7 @@ function CompanySettingsPage() {
 													className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30 rounded-lg transition-colors text-sm flex items-center gap-2"
 												>
 													<Trash2 className="w-4 h-4" />
-													Remove Logo
+													Update Logo
 												</button>
 											</div>
 										</div>

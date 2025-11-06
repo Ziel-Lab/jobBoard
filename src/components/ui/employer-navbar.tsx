@@ -26,9 +26,43 @@ export default function EmployerNavbar() {
 		}
 	}, [])
 
-	function handleLogout() {
-		// logout()
-		router.push('/login')
+	const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+	async function handleLogout() {
+		if (isLoggingOut) return
+		setIsLoggingOut(true)
+
+		try {
+			// Get current access token for the logout request
+			const accessToken = document.cookie
+				.split('; ')
+				.find(row => row.startsWith('accessToken='))
+				?.split('=')[1]
+
+			// Call backend logout endpoint through our proxy
+			const res = await fetch('/api/auth/logout', {
+				method: 'POST',
+				credentials: 'include', // Important: needed for cookies
+				headers: {
+					'Content-Type': 'application/json',
+					...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+				},
+			})
+
+			if (!res.ok) {
+				throw new Error(await res.text())
+			}
+
+			// Redirect to login and force a page refresh to clear state
+			router.replace('/login')
+			window.location.reload()
+		} catch (err) {
+			console.error('Logout error:', err)
+			// Still redirect on error
+			router.replace('/login')
+		} finally {
+			setIsLoggingOut(false)
+		}
 	}
 
 	return (
@@ -113,10 +147,20 @@ export default function EmployerNavbar() {
 						{/* Logout Button */}
 						<button
 							onClick={handleLogout}
-							className="flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+							disabled={isLoggingOut}
+							className={`flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] ${isLoggingOut ? 'opacity-60 cursor-wait' : ''}`}
 						>
-							<LogOut className="w-4 h-4" />
-							<span className="hidden sm:inline">Logout</span>
+							{isLoggingOut ? (
+								<>
+									<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400" />
+									<span className="hidden sm:inline">Logging out...</span>
+								</>
+							) : (
+								<>
+									<LogOut className="w-4 h-4" />
+									<span className="hidden sm:inline">Logout</span>
+								</>
+							)}
 						</button>
 					</div>
 
