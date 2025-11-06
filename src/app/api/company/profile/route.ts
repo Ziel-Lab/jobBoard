@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
 		if (!response.ok) {
 			const errorData = await response.json().catch(() => ({}))
-			console.error('[Company Profile API] Backend error:', errorData.message || 'Unknown error')
+			console.error('[Company Profile API] Backend error:', errorData || 'Unknown error')
 			return NextResponse.json(
 				{
 					success: false,
