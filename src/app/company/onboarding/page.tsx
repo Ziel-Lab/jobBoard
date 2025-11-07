@@ -17,6 +17,13 @@ const companyDetailsSchema = z.object({
 	location: z.string().min(2, 'Location must be at least 2 characters'),
 	website: z.string().url('Please enter a valid website URL').optional().or(z.literal('')),
 	description: z.string().min(10, 'Description must be at least 10 characters'),
+	subdomain: z.string()
+		.min(3, 'Subdomain must be at least 3 characters')
+		.max(63, 'Subdomain must be at most 63 characters')
+		.regex(
+			/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/,
+			'Subdomain can only contain lowercase letters, numbers, and hyphens. Must start and end with a letter or number.'
+		),
 })
 
 const teamSetupSchema = z.object({
@@ -127,8 +134,35 @@ function CompanyOnboardingPage() {
 			location: '',
 			website: '',
 			description: '',
+			subdomain: '',
 		},
 	})
+
+	// Generate subdomain suggestion from company name
+	const generateSubdomainSuggestion = (companyName: string): string => {
+		return companyName
+			.toLowerCase()
+			.replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+			.replace(/\s+/g, '-') // Replace spaces with hyphens
+			.replace(/-+/g, '-') // Replace multiple hyphens with single
+			.replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+			.slice(0, 63) // Limit to 63 characters
+	}
+
+	// Auto-generate subdomain when company name changes
+	const handleCompanyNameChange = (value: string) => {
+		companyForm.setValue('companyName', value)
+		// Auto-generate subdomain if it's empty or matches the previous suggestion
+		const currentSubdomain = companyForm.getValues('subdomain')
+		const previousSuggestion = generateSubdomainSuggestion(companyForm.getValues('companyName') || '')
+		const suggested = generateSubdomainSuggestion(value)
+		
+		if (!currentSubdomain || currentSubdomain === previousSuggestion || currentSubdomain === suggested) {
+			if (suggested) {
+				companyForm.setValue('subdomain', suggested)
+			}
+		}
+	}
 
 	const teamForm = useForm<TeamSetupForm>({
 		resolver: zodResolver(teamSetupSchema),
@@ -193,6 +227,7 @@ function CompanyOnboardingPage() {
 					location: companyData.location,
 					website: companyData.website || '',
 					description: companyData.description,
+					subdomain: companyData.subdomain || '',
 				},
 				teamData: {
 					teamMembers: (teamData.teamMembers || []).map(member => ({
@@ -289,7 +324,9 @@ function CompanyOnboardingPage() {
 								Company Name *
 							</label>
 							<input
-								{...companyForm.register('companyName')}
+								{...companyForm.register('companyName', {
+									onChange: (e) => handleCompanyNameChange(e.target.value)
+								})}
 								className={getInputClasses(!!companyForm.formState.errors.companyName)}
 								placeholder="Enter your company name"
 							/>
@@ -298,6 +335,46 @@ function CompanyOnboardingPage() {
 									{companyForm.formState.errors.companyName.message}
 								</p>
 							)}
+						</div>
+
+						<div>
+							<label className="block text-sm font-medium text-white/90 mb-2">
+								Subdomain *
+							</label>
+							<div className="flex items-center gap-2">
+								<input
+									{...companyForm.register('subdomain', {
+										setValueAs: (value: string) => value.toLowerCase().trim(),
+										onBlur: (e) => {
+											const value = e.target.value.toLowerCase().trim()
+											if (!value) {
+												// Auto-fill if empty on blur
+												const companyName = companyForm.getValues('companyName')
+												if (companyName) {
+													const suggested = generateSubdomainSuggestion(companyName)
+													if (suggested) {
+														companyForm.setValue('subdomain', suggested)
+													}
+												}
+											}
+										}
+									})}
+									className={getInputClasses(!!companyForm.formState.errors.subdomain)}
+									placeholder="your-company"
+									pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?"
+								/>
+								<span className="text-white/60 text-sm whitespace-nowrap">
+									.{typeof window !== 'undefined' ? window.location.hostname.split('.').slice(-2).join('.') : 'visasure.co'}
+								</span>
+							</div>
+							{companyForm.formState.errors.subdomain && (
+								<p className="text-red-400 text-sm mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+									{companyForm.formState.errors.subdomain.message}
+								</p>
+							)}
+							<p className="text-white/50 text-xs mt-1">
+								This will be your company&apos;s unique URL. Only lowercase letters, numbers, and hyphens are allowed.
+							</p>
 						</div>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">

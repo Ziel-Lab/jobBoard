@@ -10,6 +10,12 @@ const onboardingSchema = z.object({
 		location: z.string().min(2),
 		website: z.string().url().optional().or(z.literal('')),
 		description: z.string().min(10),
+		subdomain: z.string()
+			.min(3)
+			.max(63)
+			.regex(/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/)
+			.optional()
+			.or(z.literal('')), // Allow empty string, will fall back to auto-generation
 	}),
 	teamData: z.object({
 		teamMembers: z.array(z.object({
@@ -36,7 +42,7 @@ export async function POST(request: NextRequest) {
 		// Validate the request body
 		const validatedData = onboardingSchema.parse(body)
 		
-		// Generate subdomain from company name
+		// Generate subdomain from company name (fallback if user didn't provide one)
 		const generateSubdomain = (companyName: string): string => {
 			return companyName
 				.toLowerCase()
@@ -44,7 +50,13 @@ export async function POST(request: NextRequest) {
 				.replace(/\s+/g, '-') // Replace spaces with hyphens
 				.replace(/-+/g, '-') // Replace multiple hyphens with single
 				.replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+				.slice(0, 63) // Limit to 63 characters
 		}
+
+		// Use user-provided subdomain or generate one from company name
+		const subdomain = validatedData.companyData.subdomain && validatedData.companyData.subdomain.trim()
+			? validatedData.companyData.subdomain.toLowerCase().trim()
+			: generateSubdomain(validatedData.companyData.companyName)
 
 		// Transform frontend data structure to match backend API expectations
 		const backendPayload = {
@@ -55,7 +67,7 @@ export async function POST(request: NextRequest) {
 				location: validatedData.companyData.location,
 				website_url: validatedData.companyData.website || '',
 				company_description: validatedData.companyData.description,
-				subdomain: generateSubdomain(validatedData.companyData.companyName),
+				subdomain: subdomain,
 			},
 			team: (validatedData.teamData.teamMembers || []).map(member => ({
 				email: member.email,
