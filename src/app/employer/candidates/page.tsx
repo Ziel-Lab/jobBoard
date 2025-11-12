@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
@@ -17,35 +17,17 @@ import {
 	Clock
 } from 'lucide-react'
 import { PortalSelect } from '@/components/ui/portal-select'
-
-interface Candidate {
-	id: string
-	name: string
-	avatar?: string
-	currentRole: string
-	location: string
-	yearsOfExperience: number
-	experienceLevel: 'entry' | 'mid' | 'senior' | 'lead'
-	skills: string[]
-	education: string
-	degree: string
-	availability: 'immediate' | '2-weeks' | '1-month' | 'not-looking'
-	preferredJobTypes: ('full-time' | 'part-time' | 'contract' | 'internship')[]
-	expectedSalaryMin?: number
-	expectedSalaryMax?: number
-	currency: 'USD' | 'EUR' | 'GBP' | 'INR'
-	isBookmarked: boolean
-	lastActive: string
-	openToRemote: boolean
-	summary: string
-	appliedJobs: string[] // Array of job IDs they've applied to
-}
-
-interface EmployerJob {
-	id: string
-	title: string
-	status: 'published' | 'draft' | 'closed' | 'paused'
-}
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { candidatesApi } from '@/lib/candidates-api'
+import type { CandidatesListQuery } from '@/lib/candidates-api'
+import { jobsApi } from '@/lib/jobs-api'
+import type { Job } from '@/types/job'
+import type {
+	CandidateListItem,
+	CandidateListMeta,
+	CandidateAvailability,
+	CandidateApplicationStatus,
+} from '@/types/candidate'
 
 const experienceLevelOptions = [
 	{ value: 'all', label: 'All Levels' },
@@ -73,160 +55,24 @@ const jobTypeOptions = [
 
 const applicationStatusOptions = [
 	{ value: 'all', label: 'All Candidates' },
-	{ value: 'applied', label: 'Applied to My Jobs' },
-	{ value: 'not-applied', label: 'Not Applied Yet' },
+	{ value: 'pending', label: 'Pending Review' },
+	{ value: 'reviewing', label: 'In Review' },
+	{ value: 'shortlisted', label: 'Shortlisted' },
+	{ value: 'interviewing', label: 'Interviewing' },
+	{ value: 'offer', label: 'Offer Extended' },
+	{ value: 'rejected', label: 'Rejected' },
+	{ value: 'hired', label: 'Hired' },
+	{ value: 'withdrawn', label: 'Withdrawn' },
 ]
 
 export default function BrowseCandidatesPage() {
 	const router = useRouter()
 
-	// Mock employer's jobs
-	const employerJobs: EmployerJob[] = [
-		{ id: '1', title: 'Senior Frontend Developer', status: 'published' },
-		{ id: '2', title: 'Backend Engineer', status: 'published' },
-		{ id: '3', title: 'Product Designer', status: 'draft' },
-		{ id: '4', title: 'DevOps Engineer', status: 'published' },
-		{ id: '5', title: 'Marketing Manager', status: 'closed' },
-		{ id: '6', title: 'Data Analyst', status: 'published' },
-	]
-
-	// Create job filter options
-	const jobFilterOptions = [
-		{ value: 'all-jobs', label: 'All My Jobs' },
-		...employerJobs
-			.filter(job => job.status === 'published')
-			.map(job => ({ value: job.id, label: job.title }))
-	]
-
-	// Mock candidates data
-	const [candidates, setCandidates] = useState<Candidate[]>([
-		{
-			id: '1',
-			name: 'Sarah Johnson',
-			currentRole: 'Senior React Developer',
-			location: 'San Francisco, CA',
-			yearsOfExperience: 6,
-			experienceLevel: 'senior',
-			skills: ['React', 'TypeScript', 'Next.js', 'Node.js', 'AWS'],
-			education: 'Stanford University',
-			degree: 'BS in Computer Science',
-			availability: 'immediate',
-			preferredJobTypes: ['full-time', 'contract'],
-			expectedSalaryMin: 140000,
-			expectedSalaryMax: 180000,
-			currency: 'USD',
-			isBookmarked: false,
-			lastActive: '2024-10-01',
-			openToRemote: true,
-			summary: 'Passionate frontend developer with extensive experience in building scalable web applications.',
-			appliedJobs: ['1', '4'], // Applied to Senior Frontend Developer and DevOps Engineer
-		},
-		{
-			id: '2',
-			name: 'Michael Chen',
-			currentRole: 'Full Stack Engineer',
-			location: 'New York, NY',
-			yearsOfExperience: 4,
-			experienceLevel: 'mid',
-			skills: ['Python', 'Django', 'React', 'PostgreSQL', 'Docker'],
-			education: 'MIT',
-			degree: 'MS in Software Engineering',
-			availability: '2-weeks',
-			preferredJobTypes: ['full-time'],
-			expectedSalaryMin: 110000,
-			expectedSalaryMax: 150000,
-			currency: 'USD',
-			isBookmarked: true,
-			lastActive: '2024-10-05',
-			openToRemote: true,
-			summary: 'Results-driven engineer specializing in backend systems and API design.',
-			appliedJobs: ['2', '6'], // Applied to Backend Engineer and Data Analyst
-		},
-		{
-			id: '3',
-			name: 'Emily Rodriguez',
-			currentRole: 'UX/UI Designer',
-			location: 'Austin, TX',
-			yearsOfExperience: 5,
-			experienceLevel: 'mid',
-			skills: ['Figma', 'Adobe XD', 'UI/UX', 'Prototyping', 'Design Systems'],
-			education: 'University of Texas',
-			degree: 'BFA in Digital Design',
-			availability: '1-month',
-			preferredJobTypes: ['full-time', 'part-time'],
-			expectedSalaryMin: 95000,
-			expectedSalaryMax: 130000,
-			currency: 'USD',
-			isBookmarked: false,
-			lastActive: '2024-10-03',
-			openToRemote: true,
-			summary: 'Creative designer focused on user-centered design and creating delightful experiences.',
-			appliedJobs: [], // No applications yet
-		},
-		{
-			id: '4',
-			name: 'David Kumar',
-			currentRole: 'DevOps Engineer',
-			location: 'Seattle, WA',
-			yearsOfExperience: 7,
-			experienceLevel: 'senior',
-			skills: ['Kubernetes', 'AWS', 'Terraform', 'CI/CD', 'Docker'],
-			education: 'University of Washington',
-			degree: 'BS in Computer Engineering',
-			availability: '2-weeks',
-			preferredJobTypes: ['full-time', 'contract'],
-			expectedSalaryMin: 150000,
-			expectedSalaryMax: 190000,
-			currency: 'USD',
-			isBookmarked: true,
-			lastActive: '2024-10-06',
-			openToRemote: true,
-			summary: 'Infrastructure expert with deep knowledge of cloud platforms and automation.',
-			appliedJobs: ['4'], // Applied to DevOps Engineer
-		},
-		{
-			id: '5',
-			name: 'Jessica Taylor',
-			currentRole: 'Product Manager',
-			location: 'Chicago, IL',
-			yearsOfExperience: 8,
-			experienceLevel: 'lead',
-			skills: ['Product Strategy', 'Agile', 'Roadmapping', 'Analytics', 'User Research'],
-			education: 'Northwestern University',
-			degree: 'MBA',
-			availability: 'not-looking',
-			preferredJobTypes: ['full-time'],
-			expectedSalaryMin: 130000,
-			expectedSalaryMax: 170000,
-			currency: 'USD',
-			isBookmarked: false,
-			lastActive: '2024-09-28',
-			openToRemote: false,
-			summary: 'Strategic product leader with proven track record of launching successful products.',
-			appliedJobs: ['5'], // Applied to Marketing Manager
-		},
-		{
-			id: '6',
-			name: 'Alex Thompson',
-			currentRole: 'Junior Frontend Developer',
-			location: 'Portland, OR',
-			yearsOfExperience: 2,
-			experienceLevel: 'entry',
-			skills: ['JavaScript', 'React', 'HTML/CSS', 'Git', 'REST APIs'],
-			education: 'Portland State University',
-			degree: 'BS in Computer Science',
-			availability: 'immediate',
-			preferredJobTypes: ['full-time', 'internship'],
-			expectedSalaryMin: 70000,
-			expectedSalaryMax: 90000,
-			currency: 'USD',
-			isBookmarked: false,
-			lastActive: '2024-10-07',
-			openToRemote: true,
-			summary: 'Enthusiastic developer eager to grow and contribute to impactful projects.',
-			appliedJobs: ['1'], // Applied to Senior Frontend Developer
-		},
-	])
+	const [candidates, setCandidates] = useState<CandidateListItem[]>([])
+	const [meta, setMeta] = useState<CandidateListMeta | null>(null)
+	const [isLoading, setIsLoading] = useState(false)
+	const [apiError, setApiError] = useState<string | null>(null)
+	const [employerJobs, setEmployerJobs] = useState<Job[]>([])
 
 	const [searchQuery, setSearchQuery] = useState('')
 	const [experienceFilter, setExperienceFilter] = useState('all')
@@ -238,41 +84,120 @@ export default function BrowseCandidatesPage() {
 	const [currentPage, setCurrentPage] = useState(1)
 	const candidatesPerPage = 24
 
-	// Filter candidates
-	const filteredCandidates = candidates.filter(candidate => {
-		const matchesSearch = searchQuery === '' || 
-			candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			candidate.currentRole.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			candidate.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase())) ||
-			candidate.location.toLowerCase().includes(searchQuery.toLowerCase())
-		
-		const matchesExperience = experienceFilter === 'all' || candidate.experienceLevel === experienceFilter
-		const matchesAvailability = availabilityFilter === 'all' || candidate.availability === availabilityFilter
-		const matchesJobType = jobTypeFilter === 'all' || candidate.preferredJobTypes.some(type => type === jobTypeFilter)
-		const matchesRemote = !remoteOnlyFilter || candidate.openToRemote
-		
-		// Filter by application status
-		let matchesApplicationStatus = true
-		if (applicationStatusFilter === 'applied') {
-			matchesApplicationStatus = candidate.appliedJobs.length > 0
-		} else if (applicationStatusFilter === 'not-applied') {
-			matchesApplicationStatus = candidate.appliedJobs.length === 0
-		}
-		
-		// Filter by specific job
-		let matchesSpecificJob = true
-		if (specificJobFilter !== 'all-jobs') {
-			matchesSpecificJob = candidate.appliedJobs.includes(specificJobFilter)
-		}
-		
-		return matchesSearch && matchesExperience && matchesAvailability && matchesJobType && matchesRemote && matchesApplicationStatus && matchesSpecificJob
-	})
+	// Fetch employer's jobs for the filter dropdown
+	useEffect(() => {
+		let isActive = true
 
-	// Pagination
-	const totalPages = Math.ceil(filteredCandidates.length / candidatesPerPage)
-	const startIndex = (currentPage - 1) * candidatesPerPage
-	const endIndex = startIndex + candidatesPerPage
-	const paginatedCandidates = filteredCandidates.slice(startIndex, endIndex)
+		const fetchJobs = async () => {
+			try {
+				const { jobs, error } = await jobsApi.listJobs({
+					page: 1,
+					pageSize: 100, // Get all jobs for the filter
+					sortBy: 'created_at',
+					sortOrder: 'desc',
+				})
+				
+				if (isActive) {
+					if (error) {
+						console.error('Error fetching jobs:', error.message)
+					} else if (jobs) {
+						setEmployerJobs(jobs.jobs || [])
+					}
+				}
+			} catch (error) {
+				console.error('Error fetching jobs:', error)
+			}
+		}
+
+		void fetchJobs()
+
+		return () => {
+			isActive = false
+		}
+	}, [])
+
+	// Create job filter options from fetched jobs
+	const jobFilterOptions = useMemo(() => [
+		{ value: 'all-jobs', label: 'All My Jobs' },
+		...employerJobs
+			.filter(job => job.jobStatus === 'published')
+			.map(job => ({ value: job.id, label: job.jobTitle }))
+	], [employerJobs])
+
+	// Fetch candidates
+	useEffect(() => {
+		let isActive = true
+
+		const fetchCandidates = async () => {
+			setIsLoading(true)
+			setApiError(null)
+
+			const query: CandidatesListQuery = {
+				page: currentPage,
+				limit: candidatesPerPage,
+				sort_by: 'overall_score',
+				sort_order: 'desc',
+				search: searchQuery || undefined,
+				experience_level: experienceFilter !== 'all' ? experienceFilter : undefined,
+				availability: availabilityFilter !== 'all' ? availabilityFilter : undefined,
+				job_type: jobTypeFilter !== 'all' ? jobTypeFilter : undefined,
+				remote_only: remoteOnlyFilter || undefined,
+				application_status: applicationStatusFilter !== 'all' ? applicationStatusFilter : undefined,
+				job_id: specificJobFilter !== 'all-jobs' ? specificJobFilter : undefined,
+			}
+
+			console.log('[Candidates Page] Fetching candidates with query:', query)
+			const { candidates: fetchedCandidates, meta: fetchedMeta, error } = await candidatesApi.listCandidates(query)
+			console.log('[Candidates Page] API Response:', { 
+				candidatesCount: fetchedCandidates.length, 
+				meta: fetchedMeta, 
+				error 
+			})
+
+			if (!isActive) {
+				return
+			}
+
+			if (error) {
+				console.error('[Candidates Page] Error:', error)
+				setApiError(error.message)
+				setCandidates([])
+				setMeta(null)
+			} else {
+				console.log('[Candidates Page] Setting candidates:', fetchedCandidates.length, 'candidates')
+				setCandidates(fetchedCandidates)
+				setMeta(fetchedMeta)
+				if (fetchedMeta?.page && fetchedMeta.page !== currentPage) {
+					setCurrentPage(fetchedMeta.page)
+				}
+			}
+
+			setIsLoading(false)
+		}
+
+		void fetchCandidates()
+
+		return () => {
+			isActive = false
+		}
+	}, [
+		currentPage,
+		searchQuery,
+		experienceFilter,
+		availabilityFilter,
+		jobTypeFilter,
+		remoteOnlyFilter,
+		applicationStatusFilter,
+		specificJobFilter,
+	])
+
+	const totalPages = meta?.totalPages ?? 0
+	const totalCount = meta?.totalCount ?? 0
+	const currentPageNumber = meta?.page ?? currentPage
+	const pageSize = meta?.pageSize ?? candidatesPerPage
+	const startIndex = totalCount === 0 ? 0 : (currentPageNumber - 1) * pageSize + 1
+	const endIndex = totalCount === 0 ? 0 : Math.min(currentPageNumber * pageSize, totalCount)
+	const paginatedCandidates = candidates
 
 	const handleClearFilters = () => {
 		setSearchQuery('')
@@ -303,7 +228,11 @@ export default function BrowseCandidatesPage() {
 		))
 	}
 
-	const getAvailabilityBadge = (availability: Candidate['availability']) => {
+	const getAvailabilityBadge = (availability?: CandidateAvailability) => {
+		if (!availability) {
+			return null
+		}
+
 		const styles = {
 			immediate: 'bg-green-500/20 text-green-300 border-green-500/30',
 			'2-weeks': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
@@ -325,13 +254,28 @@ export default function BrowseCandidatesPage() {
 		)
 	}
 
-	const getInitials = (name: string) => {
+	const getInitials = (name?: string) => {
+		if (!name) {
+			return '??'
+		}
+
 		return name
+			.trim()
 			.split(' ')
-			.map(n => n[0])
+			.filter(Boolean)
+			.map(n => n[0]?.toUpperCase() ?? '')
 			.join('')
-			.toUpperCase()
-			.slice(0, 2)
+			.slice(0, 2) || '??'
+	}
+
+	const formatStatusLabel = (status?: CandidateApplicationStatus) => {
+		if (!status) {
+			return ''
+		}
+
+		return status
+			.replace(/[-_]/g, ' ')
+			.replace(/\b\w/g, char => char.toUpperCase())
 	}
 
 	const hasActiveFilters = searchQuery !== '' || experienceFilter !== 'all' || availabilityFilter !== 'all' || jobTypeFilter !== 'all' || remoteOnlyFilter || applicationStatusFilter !== 'all' || specificJobFilter !== 'all-jobs'
@@ -477,17 +421,34 @@ export default function BrowseCandidatesPage() {
 				{/* Results Count */}
 				<div className="mb-4 flex items-center justify-between">
 					<p className="text-white/60 text-sm">
-						Showing <span className="text-white font-semibold">{startIndex + 1}-{Math.min(endIndex, filteredCandidates.length)}</span> of <span className="text-white font-semibold">{filteredCandidates.length}</span> candidate{filteredCandidates.length !== 1 ? 's' : ''}
+						Showing <span className="text-white font-semibold">{totalCount > 0 ? `${startIndex}-${endIndex}` : '0-0'}</span> of <span className="text-white font-semibold">{totalCount}</span> candidate{totalCount !== 1 ? 's' : ''}
 					</p>
 					{totalPages > 1 && (
 						<p className="text-white/60 text-sm">
-							Page <span className="text-white font-semibold">{currentPage}</span> of <span className="text-white font-semibold">{totalPages}</span>
+							Page <span className="text-white font-semibold">{currentPageNumber}</span> of <span className="text-white font-semibold">{totalPages}</span>
 						</p>
 					)}
 				</div>
 
 				{/* Candidates Grid */}
-				{filteredCandidates.length > 0 ? (
+				{isLoading ? (
+					<div className="flex items-center justify-center py-16">
+						<LoadingSpinner />
+					</div>
+				) : apiError ? (
+					<div className="text-center py-16 rounded-2xl border border-red-500/20 bg-red-500/10 backdrop-blur-xl">
+						<h3 className="text-xl font-semibold text-red-400 mb-2">
+							Error Loading Candidates
+						</h3>
+						<p className="text-white/60 mb-6">{apiError}</p>
+						<button
+							onClick={() => window.location.reload()}
+							className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
+						>
+							Try Again
+						</button>
+					</div>
+				) : paginatedCandidates.length > 0 ? (
 					<>
 						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 							{paginatedCandidates.map((candidate) => (
@@ -500,19 +461,32 @@ export default function BrowseCandidatesPage() {
 										{/* Avatar */}
 										<div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
 											<span className="text-indigo-300 font-semibold text-lg">
-												{getInitials(candidate.name)}
+												{getInitials(candidate.fullName)}
 											</span>
 										</div>
 
 										{/* Name & Role */}
 										<div className="flex-1 min-w-0">
 											<div className="flex items-start justify-between gap-2 mb-1">
-												<h3 className="text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors">
-													{candidate.name}
-												</h3>
+												<div className="space-y-1">
+													<div className="flex items-center gap-2 flex-wrap">
+														<h3 className="text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors">
+															{candidate.fullName || 'Unnamed Candidate'}
+														</h3>
+														{candidate.matchScores?.overallScore !== undefined && (
+															<span className="px-2 py-0.5 text-xs font-semibold text-indigo-200 bg-indigo-600/20 border border-indigo-600/40 rounded-full">
+																{Math.round(candidate.matchScores.overallScore)}% match
+															</span>
+														)}
+													</div>
+													<p className="text-white/80 text-sm">
+														{candidate.currentRole || candidate.headline || 'Role not specified'}
+													</p>
+												</div>
 												<button
 													onClick={() => toggleBookmark(candidate.id)}
 													className="text-white/60 hover:text-yellow-400 transition-colors flex-shrink-0"
+													aria-label={candidate.isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
 												>
 													{candidate.isBookmarked ? (
 														<BookmarkCheck className="w-5 h-5 text-yellow-400 fill-yellow-400" />
@@ -521,11 +495,10 @@ export default function BrowseCandidatesPage() {
 													)}
 												</button>
 											</div>
-											<p className="text-white/80 text-sm mb-2">{candidate.currentRole}</p>
 											<div className="flex flex-wrap items-center gap-2 text-xs text-white/60">
 												<span className="flex items-center gap-1">
 													<MapPin className="w-3.5 h-3.5" />
-													{candidate.location}
+													{candidate.location || 'Location not provided'}
 												</span>
 												{candidate.openToRemote && (
 													<span className="px-2 py-0.5 text-xs font-semibold text-emerald-300 bg-emerald-500/20 rounded-full border border-emerald-500/30">
@@ -538,36 +511,52 @@ export default function BrowseCandidatesPage() {
 
 									{/* Summary */}
 									<p className="text-white/70 text-sm mb-4 line-clamp-2">
-										{candidate.summary}
+										{candidate.summary || 'No summary provided yet.'}
 									</p>
 
 									{/* Details Grid */}
 									<div className="grid grid-cols-2 gap-3 mb-4 text-xs sm:text-sm">
 										<div>
 											<p className="text-white/60 mb-1">Experience</p>
-											<p className="text-white font-medium">{candidate.yearsOfExperience} years</p>
+											<p className="text-white font-medium">
+												{candidate.yearsOfExperience ?? candidate.experienceYears ?? '—'}{(candidate.yearsOfExperience ?? candidate.experienceYears) !== undefined ? ' years' : ''}
+											</p>
 										</div>
 										<div>
 											<p className="text-white/60 mb-1">Level</p>
-											<p className="text-white font-medium capitalize">{candidate.experienceLevel}</p>
+											<p className="text-white font-medium capitalize">
+												{candidate.experienceLevel ?? '—'}
+											</p>
 										</div>
 										<div>
 											<p className="text-white/60 mb-1">Education</p>
-											<p className="text-white font-medium truncate">{candidate.degree}</p>
+											<p className="text-white font-medium truncate">
+												{candidate.degreeSummary || candidate.educationSummary || 'Not specified'}
+											</p>
 										</div>
 										<div>
 											<p className="text-white/60 mb-1">Availability</p>
-											{getAvailabilityBadge(candidate.availability)}
+											{getAvailabilityBadge(candidate.availability) ?? (
+												<span className="text-white font-medium">—</span>
+											)}
+										</div>
+										<div>
+											<p className="text-white/60 mb-1">Overall Match</p>
+											<p className="text-white font-medium">
+												{candidate.matchScores?.overallScore !== undefined
+													? `${Math.round(candidate.matchScores.overallScore)}%`
+													: '—'}
+											</p>
 										</div>
 									</div>
 
 									{/* Salary Expectations */}
-									{candidate.expectedSalaryMin && candidate.expectedSalaryMax && (
+									{candidate.expectedSalaryMin !== undefined && candidate.expectedSalaryMax !== undefined && (
 										<div className="mb-4 p-3 bg-white/5 border border-white/10 rounded-lg">
 											<p className="text-white/60 text-xs mb-1">Expected Salary</p>
 											<p className="text-green-400 font-semibold text-sm flex items-center gap-1">
 												<DollarSign className="w-3.5 h-3.5" />
-												{candidate.currency} {candidate.expectedSalaryMin.toLocaleString()} - {candidate.expectedSalaryMax.toLocaleString()}
+												{candidate.currency ?? 'USD'} {candidate.expectedSalaryMin.toLocaleString()} - {candidate.expectedSalaryMax.toLocaleString()}
 											</p>
 										</div>
 									)}
@@ -576,7 +565,7 @@ export default function BrowseCandidatesPage() {
 									<div className="mb-4">
 										<p className="text-white/60 text-xs mb-2">Skills</p>
 										<div className="flex flex-wrap gap-1.5">
-											{candidate.skills.slice(0, 6).map((skill) => (
+											{(candidate.topSkills ?? candidate.skills ?? []).slice(0, 6).map((skill) => (
 												<span
 													key={skill}
 													className="px-2 py-1 text-xs font-medium text-white/80 bg-white/10 border border-white/20 rounded-full"
@@ -584,10 +573,13 @@ export default function BrowseCandidatesPage() {
 													{skill}
 												</span>
 											))}
-											{candidate.skills.length > 6 && (
+											{(candidate.topSkills ?? candidate.skills ?? []).length > 6 && (
 												<span className="px-2 py-1 text-xs font-medium text-white/60 bg-white/5 border border-white/15 rounded-full">
-													+{candidate.skills.length - 6}
+													+{(candidate.topSkills ?? candidate.skills ?? []).length - 6}
 												</span>
+											)}
+											{(candidate.topSkills ?? candidate.skills ?? []).length === 0 && (
+												<span className="text-white/50 text-xs">No skills listed</span>
 											)}
 										</div>
 									</div>
@@ -596,7 +588,7 @@ export default function BrowseCandidatesPage() {
 									<div className="mb-4">
 										<p className="text-white/60 text-xs mb-2">Preferred Job Types</p>
 										<div className="flex flex-wrap gap-1.5">
-											{candidate.preferredJobTypes.map((type) => (
+											{candidate.preferredJobTypes?.map((type) => (
 												<span
 													key={type}
 													className="px-2 py-1 text-xs font-medium text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 rounded-full capitalize"
@@ -604,31 +596,37 @@ export default function BrowseCandidatesPage() {
 													{type.replace('-', ' ')}
 												</span>
 											))}
+											{!candidate.preferredJobTypes?.length && (
+												<span className="text-white/50 text-xs">No preference specified</span>
+											)}
 										</div>
 									</div>
 
-					{/* Applied Jobs */}
-					{candidate.appliedJobs.length > 0 && (
-						<div className="mb-4 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
-							<p className="text-indigo-300 text-xs font-semibold mb-2 flex items-center gap-1">
-								<Briefcase className="w-3.5 h-3.5" />
-								Applied to {candidate.appliedJobs.length} of your job{candidate.appliedJobs.length !== 1 ? 's' : ''}
-							</p>
-							<div className="flex flex-wrap gap-1.5">
-								{candidate.appliedJobs.map((jobId) => {
-									const job = employerJobs.find(j => j.id === jobId)
-									return job ? (
-										<span
-											key={jobId}
-											className="px-2 py-1 text-xs text-indigo-200 bg-indigo-600/20 border border-indigo-600/30 rounded-full"
-										>
-											{job.title}
-										</span>
-									) : null
-								})}
-							</div>
-						</div>
-					)}
+									{/* Applied Jobs */}
+									{candidate.applications && candidate.applications.length > 0 && (
+										<div className="mb-4 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
+											<p className="text-indigo-300 text-xs font-semibold mb-2 flex items-center gap-1">
+												<Briefcase className="w-3.5 h-3.5" />
+												Applied to {candidate.applications.length} of your job
+												{candidate.applications.length !== 1 ? 's' : ''}
+											</p>
+											<div className="flex flex-wrap gap-1.5">
+												{candidate.applications.map((application) => (
+													<span
+														key={application.id}
+														className="px-2 py-1 text-xs text-indigo-200 bg-indigo-600/20 border border-indigo-600/30 rounded-full flex items-center gap-1"
+													>
+														{application.jobTitle}
+														{application.status && (
+															<span className="text-indigo-200/70">
+																• {formatStatusLabel(application.status)}
+															</span>
+														)}
+													</span>
+												))}
+											</div>
+										</div>
+									)}
 
 					{/* Last Active */}
 					<div className="mb-4 flex items-center gap-2 text-xs text-white/50">
@@ -636,10 +634,10 @@ export default function BrowseCandidatesPage() {
 						Last active: {new Date(candidate.lastActive).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
 					</div>
 
-					{/* Actions */}
+									{/* Actions */}
 									<div className="pt-4 border-t border-white/10 grid grid-cols-2 gap-2">
 										<Link
-											href={`/employer/candidates/${candidate.id}`}
+											href={`/employer/candidates/${candidate.applications?.[0]?.id || candidate.id}`}
 											className="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-600/30 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
 										>
 											<Eye className="w-4 h-4" />
